@@ -15,11 +15,10 @@ Using technologies to track the position of the body and/or head, the app provid
 
 ## 🛠 Technologies Used - WORK IN PROGRESS
 (Potential technologies)
-- Python 3.12
-- C#
-- OpenCV
-- Freetrack
-- JJ
+- JavaScript (ES6+)
+- HTML5 / CSS3
+- TensorFlow.js
+- MediaPipe
 - Git
 
 ## Next Steps
@@ -58,11 +57,10 @@ graph LR
     H --> I[Monitor & Improve]
 
     subgraph Technologies
-        T1[Python 3.12]
-        T2[C#]
-        T3[OpenCV]
-        T4[Freetrack]
-        T5[Git]
+        T1[JavaScript]
+        T2[TensorFlow.js]
+        T3[MediaPipe]
+        T4[Git]
     end
 
     subgraph Challenges

@@ -6,8 +6,6 @@
         <title>Posture Checker</title>
         <meta name="theme-color" content="#2b2b2b">
         <link rel="manifest" href="/manifest.json">
-        <link rel="icon" href="./openCV/icons/icon-192.svg">
-        <link rel="apple-touch-icon" href="./openCV/icons/icon-192.svg">
         <meta name="apple-mobile-web-app-capable" content="yes">
 
         <!-- Bootstrap CSS -->
@@ -67,7 +65,7 @@
                 </div>
 
                 <center>
-                <div id="viewer">
+                <div id="viewer" style="display: flex; justify-content: center; align-items: center;">
                     <video id="videoInput" width="300px" style="display: none"></video>
                     <canvas id="canvasOutput"></canvas>
                 </div>
@@ -154,7 +152,16 @@
 
         <h2 id="counter" class="text-center mt-3"></h2>
 
-        <script async src="./openCV/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
         <script src="./index.js" type="text/javascript"></script>
+        <script>
+            // Initialize after all scripts are loaded
+            window.addEventListener('load', onTensorFlowReady);
+        </script>
+        
     </body>
 </html>
