@@ -1,10 +1,35 @@
 {
-  "name": "Posture Checker",
-  "short_name": "Posture",
-  "description": "Monitor your posture with AI-powered face detection",
+  "name": "Posture Checker - AI Posture Monitor",
+  "short_name": "Posture Checker",
+  "description": "Monitor and improve your sitting posture with AI-powered face detection and real-time alerts",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2b2b2b",
-  "icons": []
+  "categories": ["health", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%232b2b2b' width='192' height='192'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='%2300FFFF' font-family='Arial, sans-serif'%3E🪑%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%232b2b2b' width='512' height='512'/%3E%3Ctext x='256' y='320' font-size='200' text-anchor='middle' fill='%2300FFFF' font-family='Arial, sans-serif'%3E🪑%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start Tracking",
+      "short_name": "Track",
+      "description": "Start posture monitoring",
+      "url": "./"
+    }
+  ]
 }

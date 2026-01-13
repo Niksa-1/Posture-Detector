@@ -1,10 +1,11 @@
-const CACHE_NAME = 'posture-checker-v1';
+const CACHE_NAME = 'posture-checker-v2';
 const FILES_TO_CACHE = [
   './',
   './index.html',
   './index.js',
   './styles.css',
-  './manifest.json'
+  './manifest.json',
+  './warning.mp3'
 ];
 
 self.addEventListener('install', (evt) => {

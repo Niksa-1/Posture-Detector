@@ -3,10 +3,22 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Posture Checker</title>
+        <title>Posture Checker - AI Posture Monitor</title>
+        
+        <!-- PWA Meta Tags -->
+        <meta name="description" content="Monitor and improve your sitting posture with AI-powered face detection and real-time alerts">
         <meta name="theme-color" content="#2b2b2b">
-        <link rel="manifest" href="/manifest.json">
+        <link rel="manifest" href="./manifest.json">
+        
+        <!-- Apple Touch Icon -->
+        <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%232b2b2b' width='192' height='192'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='%2300FFFF' font-family='Arial, sans-serif'%3E🪑%3C/text%3E%3C/svg%3E">
         <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Posture Checker">
+        
+        <!-- Microsoft Tiles -->
+        <meta name="msapplication-TileColor" content="#2b2b2b">
+        <meta name="msapplication-tap-highlight" content="no">
 
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -57,19 +69,28 @@
             <hr>
 
             <section id="app">
-                <div class="d-flex justify-content-center mb-3 gap-2 align-items-center">
-                    <button id="startBtn" class="btn btn-success" disabled>Start Face Tracking</button>
+                <div class="d-flex justify-content-center mb-3 gap-2 align-items-center flex-wrap">
                     <div id="spinner" class="spinner-border text-success" role="status" style="display:none; width: 2rem; height: 2rem;">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
 
+                <div id="calibrationInstructions" class="alert alert-info text-center" role="alert" style="display:none; margin-bottom: 1rem;">
+                    <strong>📐 Calibration Mode</strong><br>
+                    Sit in your best upright posture and click "Confirm Upright Position" when ready.
+                </div>
+
                 <center>
                 <div id="viewer" style="display: flex; justify-content: center; align-items: center;">
-                    <video id="videoInput" width="300px" style="display: none"></video>
+                    <video id="videoInput" width="300px" style="position: absolute; left: -9999px;"></video>
                     <canvas id="canvasOutput"></canvas>
                 </div>
                 </center>
+
+                <div class="d-flex justify-content-center mt-3 gap-2">
+                    <button id="confirmCalibrationBtn" class="btn btn-success" style="display:none;">Confirm Upright Position</button>
+                    <button id="startBtn" class="btn btn-success" disabled>Start Face Tracking</button>
+                </div>
 
                 <div class="mt-4">
                     <label for="thresholdSlider" class="form-label text-center d-block">Height Threshold: <span id="thresholdValue">100</span>px</label>
@@ -90,14 +111,6 @@
             <section id="upcoming" class="mb-4">
                 <h2 class="h4 text-center mb-4">Upcoming Features</h2>
                 <div class="row gx-3 gy-3 justify-content-center">
-                    <div class="col-12">
-                        <div class="card h-100">
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Calibration</h5>
-                                <p class="card-text">Personalize the posture detection to your unique body proportions.</p>
-                            </div>
-                        </div>
-                    </div>
                     <div class="col-12">
                         <div class="card h-100">
                             <div class="card-body text-center">

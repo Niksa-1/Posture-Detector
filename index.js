@@ -3,12 +3,17 @@
 // ============================================
 
 // Configuration
-const FPS = 12;
+const FPS = 20;
 const FRAME_DELAY = 1000 / FPS;
 
 // State
 let detector = null;
 let isTracking = false;
+let isCalibrating = false;
+let isCalibrated = false;
+let calibrationStage = 0; // 0: not started, 1: upright, 2: relaxed
+let uprightPosition = null;
+let relaxedPosition = null;
 let timerId = null;
 let lastFrameTime = 0;
 let canvasScale = 1;
@@ -19,6 +24,8 @@ const elements = {
     canvas: null,
     canvasCtx: null,
     startBtn: null,
+    confirmCalibrationBtn: null,
+    calibrationInstructions: null,
     spinner: null,
     thresholdSlider: null,
     thresholdValue: null,
@@ -38,6 +45,8 @@ function cacheElements() {
     elements.canvas = document.getElementById('canvasOutput');
     elements.canvasCtx = elements.canvas?.getContext('2d');
     elements.startBtn = document.getElementById('startBtn');
+    elements.confirmCalibrationBtn = document.getElementById('confirmCalibrationBtn');
+    elements.calibrationInstructions = document.getElementById('calibrationInstructions');
     elements.spinner = document.getElementById('spinner');
     elements.thresholdSlider = document.getElementById('thresholdSlider');
     elements.thresholdValue = document.getElementById('thresholdValue');
@@ -184,7 +193,7 @@ function drawKeypoints(faces) {
  * Draw threshold line on canvas
  */
 function drawThresholdLine() {
-    if (!elements.canvasCtx || !elements.thresholdSlider || !elements.canvas) return;
+    if (!elements.canvasCtx || !elements.canvas || !elements.thresholdSlider) return;
 
     const ctx = elements.canvasCtx;
     const threshold = parseInt(elements.thresholdSlider.value) * canvasScale;
@@ -227,7 +236,7 @@ function checkPosture(faces) {
  * Process a single video frame
  */
 async function processFrame() {
-    if (!isTracking || !elements.video || !elements.canvas || !elements.canvasCtx) {
+    if ((!isTracking && !isCalibrating) || !elements.video || !elements.canvas || !elements.canvasCtx) {
         return;
     }
 
@@ -248,18 +257,23 @@ async function processFrame() {
             elements.canvas.height
         );
 
-        // Detect faces
-        const faces = await detectFaces();
+        // During calibration, only show plain video
+        if (isCalibrating) {
+            // Just show video, no face detection overlays
+        } else {
+            // Tracking mode: show face detection and threshold
+            const faces = await detectFaces();
+            
+            // Check posture
+            checkPosture(faces);
 
-        // Check posture
-        checkPosture(faces);
+            // Render detections
+            drawThresholdLine();
+            drawFaceBoxes(faces);
+            drawKeypoints(faces);
 
-        // Render detections
-        drawThresholdLine();
-        drawFaceBoxes(faces);
-        drawKeypoints(faces);
-
-        console.log(`Detected ${faces.length} face(s)`);
+            console.log(`Detected ${faces.length} face(s)`);
+        }
     } catch (err) {
         console.error('Frame processing error:', err);
     }
@@ -273,11 +287,17 @@ async function processFrame() {
 // ============================================
 
 /**
- * Start face tracking
+ * Start face tracking (with calibration if needed)
  */
 async function startTracking() {
     if (isTracking) {
         stopTracking();
+        return;
+    }
+
+    // If not calibrated, start calibration mode first
+    if (!isCalibrated) {
+        startCalibration();
         return;
     }
 
@@ -340,6 +360,123 @@ function resetUI() {
 }
 
 // ============================================
+// CALIBRATION
+// ============================================
+
+/**
+ * Start calibration mode
+ */
+async function startCalibration() {
+    // Setup UI
+    if (elements.startBtn) {
+        elements.startBtn.disabled = true;
+    }
+    if (elements.spinner) elements.spinner.style.display = 'inline-block';
+
+    // Setup camera and canvas
+    const cameraReady = await setupVideoStream();
+    if (!cameraReady) {
+        console.error('Failed to access camera');
+        if (elements.spinner) elements.spinner.style.display = 'none';
+        if (elements.startBtn) elements.startBtn.disabled = false;
+        return;
+    }
+
+    // Wait for video to be ready
+    elements.video.onloadedmetadata = async () => {
+        await elements.video.play();
+        setupCanvas();
+        isCalibrating = true;
+        calibrationStage = 1; // Start with upright position
+        
+        if (elements.spinner) elements.spinner.style.display = 'none';
+        if (elements.calibrationInstructions) {
+            elements.calibrationInstructions.innerHTML = '<strong>📐 Calibration - Step 1/2</strong><br>Sit in your best upright posture and click "Confirm Upright Position" when ready.';
+            elements.calibrationInstructions.style.display = 'block';
+        }
+        if (elements.confirmCalibrationBtn) {
+            elements.confirmCalibrationBtn.textContent = 'Confirm Upright Position';
+            elements.confirmCalibrationBtn.style.display = 'inline-block';
+        }
+        if (elements.startBtn) {
+            elements.startBtn.style.display = 'none';
+        }
+        
+        processFrame();
+    };
+}
+
+/**
+ * Confirm calibration and set threshold
+ */
+async function confirmCalibration() {
+    if (!isCalibrating) return;
+
+    // Detect current face position
+    const faces = await detectFaces();
+    
+    if (faces.length === 0) {
+        alert('No face detected. Please ensure your face is visible and try again.');
+        return;
+    }
+
+    const faceTop = faces[0].box.yMin;
+    
+    if (calibrationStage === 1) {
+        // Store upright position
+        uprightPosition = faceTop;
+        calibrationStage = 2;
+        
+        // Update UI for stage 2
+        if (elements.calibrationInstructions) {
+            elements.calibrationInstructions.innerHTML = '<strong>📐 Calibration - Step 2/2</strong><br>Now sit in your typical relaxed posture and click "Confirm Relaxed Position".';
+        }
+        if (elements.confirmCalibrationBtn) {
+            elements.confirmCalibrationBtn.textContent = 'Confirm Relaxed Position';
+        }
+        
+        console.log(`✓ Upright position recorded: ${Math.round(uprightPosition)}px`);
+    } else if (calibrationStage === 2) {
+        // Store relaxed position
+        relaxedPosition = faceTop;
+        
+        // Calculate threshold: midpoint between upright and relaxed, slightly favoring upright
+        // Formula: upright + (relaxed - upright) * 0.4
+        const thresholdValue = Math.round(uprightPosition + (relaxedPosition - uprightPosition) * 0.4);
+        
+        // Update slider
+        if (elements.thresholdSlider) {
+            elements.thresholdSlider.value = thresholdValue;
+        }
+        if (elements.thresholdValue) {
+            elements.thresholdValue.textContent = thresholdValue;
+        }
+        
+        // Complete calibration
+        isCalibrating = false;
+        isCalibrated = true;
+        calibrationStage = 0;
+        
+        // Update UI
+        if (elements.calibrationInstructions) {
+            elements.calibrationInstructions.style.display = 'none';
+        }
+        if (elements.confirmCalibrationBtn) {
+            elements.confirmCalibrationBtn.style.display = 'none';
+        }
+        if (elements.startBtn) {
+            elements.startBtn.style.display = 'inline-block';
+        }
+
+        console.log(`✓ Relaxed position recorded: ${Math.round(relaxedPosition)}px`);
+        console.log(`✓ Calibration complete. Threshold set to ${thresholdValue}px`);
+        
+        // Automatically start tracking after calibration
+        await startTracking();
+    }
+}
+
+// ============================================
 // EVENT LISTENERS
 // ============================================
 
@@ -347,6 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
     if (elements.startBtn) {
         elements.startBtn.addEventListener('click', startTracking);
+    }
+    if (elements.confirmCalibrationBtn) {
+        elements.confirmCalibrationBtn.addEventListener('click', confirmCalibration);
     }
     if (elements.thresholdSlider && elements.thresholdValue) {
         elements.thresholdSlider.addEventListener('input', (e) => {
