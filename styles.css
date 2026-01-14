@@ -39,10 +39,11 @@ body {
 /* Header */
 header {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  padding: 2rem 0;
+  padding: 2.5rem 0;
   box-shadow: 0 4px 20px rgba(63, 154, 174, 0.15);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 1rem;
 }
 
 header::before {
