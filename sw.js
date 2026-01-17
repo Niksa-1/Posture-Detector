@@ -1,15 +1,11 @@
-const CACHE_NAME = 'opencvtest-cache-v1';
+const CACHE_NAME = 'posture-checker-v2';
 const FILES_TO_CACHE = [
   './',
   './index.html',
   './index.js',
-  './openCV/opencv.js',
   './styles.css',
-  './openCV/haarcascade_frontalface_default.xml',
-  './openCV/haarcascade_eye.xml',
   './manifest.json',
-  './openCV/icons/icon-192.svg',
-  './openCV/icons/icon-512.svg'
+  './warning.mp3'
 ];
 
 self.addEventListener('install', (evt) => {

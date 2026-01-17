@@ -40,13 +40,13 @@ By providing instant feedback on posture, the app helps prevent discomfort, back
 ## 3. Technical Architecture
 
 ### 3.1 Tech Stack & Rationale  
-- **Language/Runtime:** Python 3.12 or C#  
-- **Frameworks / Libraries:** OpenCV, Freetrack (if hardware tracking used), GUI library TBD (PySide6 / WPF)  
-- **Storage:** SQLite or local JSON logs  
+- **Language/Runtime:** JavaScript (Node.js, Browser)  
+- **Frameworks / Libraries:** TensorFlow.js, MediaPipe, Bootstrap  
+- **Storage:** IndexedDB or local JSON logs  
 - **Rationale:**  
-  - Python chosen for computer vision prototyping and rapid development.  
-  - C# considered for native desktop GUI integration (Windows).  
-  - OpenCV provides robust computer vision and webcam handling.  
+  - JavaScript chosen for cross-platform web-based development.  
+  - TensorFlow.js and MediaPipe provide robust face detection and pose estimation.  
+  - Browser-based approach ensures accessibility and privacy.  
   - Local storage ensures privacy and avoids cloud dependencies.
 
 ### 3.2 High-Level Architecture
@@ -57,7 +57,7 @@ The system consists of the following main components:
    Captures the live video or positional data of the user. This serves as the primary input for posture detection.
 
 2. **Posture Detection Module**  
-   Processes frames from the webcam or tracking device using computer vision libraries (OpenCV, Freetrack, MediaPipe). It estimates key body/head points and classifies the user’s posture as correct or incorrect.
+   Processes frames from the webcam using AI libraries (TensorFlow.js, MediaPipe). It estimates key body/head points and classifies the user's posture as correct or incorrect.
 
 3. **Analysis & Alert Logic**  
    Receives posture data from the detection module and applies rules for alerting. For example, if bad posture is detected continuously for a configurable duration, it triggers a visual or auditory alert.
@@ -154,8 +154,8 @@ CREATE TABLE settings (
 - Handles missing/invalid settings  
 
 **Module B – Posture Detector:**  
-- Captures frames from webcam/tracking device  
-- Uses OpenCV/Freetrack for keypoint estimation  
+- Captures frames from webcam  
+- Uses TensorFlow.js/MediaPipe for face detection and keypoint estimation  
 - Classifies posture state (GOOD/BAD)  
 - Sends events to Analysis Module  
 
