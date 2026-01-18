@@ -1,11 +1,11 @@
 # Posture Optimization App for Sitting Position - Nikša Kuzmanić, Marin Boban
 **Project:** Posture Optimization App for Sitting Position
 **Team:** Nikša Kuzmanić, Marin Boban
-**Status:** Planning
+**Status:** MVP Implementation Complete
 
 ## 🎯 Project Overview
 
-Using technologies to track the position of the body and/or head, the app provides real-time alerts to users about incorrect or unhealthy posture during sitting.
+Using MoveNet pose detection via TensorFlow.js, the app tracks a user's sitting posture in real-time and provides visual and auditory alerts when slouching is detected. The system uses intelligent calibration based on the user's own posture range.
 
 ## 👥 Team Information
 
@@ -13,72 +13,97 @@ Using technologies to track the position of the body and/or head, the app provid
 - **Marin Boban** - GitHub: [@ma31n](https://github.com/ma31n)
 - **Team Name**: BobanKuzmanic
 
-## 🛠 Technologies Used - WORK IN PROGRESS
-(Potential technologies)
-- JavaScript (ES6+)
-- HTML5 / CSS3
-- TensorFlow.js
-- MediaPipe
-- Git
+## ✨ Key Features
 
-## Next Steps
+- **MoveNet Pose Detection**: Real-time upper-body keypoint tracking (nose, shoulders, elbows, eyes, ears)
+- **Adaptive Calibration**: Two-step calibration capturing upright and relaxed posture positions
+- **Dynamic Thresholds**: Automatically calculates posture threshold from user's own posture range (40% of difference)
+- **Distance Normalization**: Maintains consistent sensitivity regardless of distance from camera
+- **Visual Timer**: Animated progress bar showing time until alert (15 seconds of continuous slouching)
+- **Zero Privacy Risk**: All processing happens locally in the browser - no cloud uploads
 
-- Research technologies that could be useful for the project
-- Select technologies for the project
-- Define project scope
+## 🛠 Technologies Used
+
+- **JavaScript (ES6+)** - Core application logic
+- **HTML5 / CSS3** - UI and styling with Bootstrap 5
+- **TensorFlow.js** - ML framework for pose detection
+- **MoveNet SinglePose Lightning** - Lightweight pose estimation model
+- **IndexedDB** - Local session storage (future enhancement)
+- **Web APIs**: getUserMedia for webcam access, Canvas for rendering
+- **Service Worker** - Progressive Web App support
+
+## 🚀 Getting Started
+
+1. Open `index.html` in a modern web browser
+2. Grant camera permissions when prompted
+3. Click "Start Face Tracking"
+4. **Calibration Step 1**: Sit in your best upright posture and click "Confirm Upright Position"
+5. **Calibration Step 2**: Slouch into your typical relaxed posture and click "Confirm Relaxed Position"
+6. The system will automatically calculate your personalized threshold
+7. Maintain good posture - after 15 continuous seconds of slouching, you'll receive an alert
+
+## 📊 How It Works
+
+### Pose Detection
+- MoveNet tracks 17 body keypoints in real-time
+- System focuses on nose and shoulders for posture analysis
+- Confidence scores filter out unreliable detections
+
+### Calibration
+- **Upright**: Records your best posture (nose-to-shoulder offset)
+- **Relaxed**: Records your typical slouched posture (nose-to-shoulder offset)
+- **Threshold**: Automatically set to 40% of the difference between these positions
+
+### Distance Compensation
+- Shoulder span used as proxy for user distance from camera
+- All measurements normalized to calibration distance
+- Ensures alerts trigger at the same slouching angle regardless of camera distance
+
+### Alert Timing
+- Timer only starts when bad posture is continuously detected
+- If user sits up straight, timer resets to zero
+- Alert triggers after 15 consecutive seconds of slouching
+- Visual progress bar provides real-time feedback
 
 ## 📈 Project Progress
 
-- WORK IN PROGRESS
+- ✅ Core pose detection with MoveNet
+- ✅ Two-step smart calibration
+- ✅ Distance-aware threshold normalization
+- ✅ Visual timer with progress bar
+- ✅ Audio alerts
+- ✅ Responsive UI
+- ⏳ Session history/analytics (future)
+- ⏳ User profiles and login (partial - see login.html)
+- ⏳ Mobile app version
 
-## 🐛 Issues & Challenges
+## 🐛 Known Limitations
 
-- Calibrating the camera independently of its position
-- Intuitive UI
-- Continuous real-time tracking requirement
-- Ergonomic challenges of different chairs
-- Accuracy of posture tracking
+- Single pose detection (one user at a time)
+- Requires adequate lighting for pose estimation
+- Wrist/hand positions excluded from visualization for clarity
+- Desktop/laptop only (mobile camera angles not optimal for posture detection)
 
-### Current Challenges
+## 📝 Architecture
 
-- WORK IN PROGRESS
+```
+index.html          - Main UI
+index.js            - Pose detection & posture logic
+styles.css          - Application styling
+sw.js               - Service worker for PWA
+login.html/js       - Authentication UI (future integration)
+```
 
-## 📝 Project Workflow Diagram
+## 🔄 Development Workflow
 
-```mermaid
-graph LR
-    A[Start] --> B[Research Technologies]
-    B --> C[Select Technologies]
-    C --> D[Define Project Scope]
-    D --> E[Design UI]
-    E --> F[Develop Features]
-    F --> G[Test & Debug]
-    G --> H[Launch]
-    H --> I[Monitor & Improve]
+The application uses a frame-based processing loop (20 FPS) that:
+1. Captures video frames
+2. Runs pose detection
+3. Analyzes nose-shoulder offset
+4. Updates visual feedback
+5. Triggers alerts when threshold exceeded
 
-    subgraph Technologies
-        T1[JavaScript]
-        T2[TensorFlow.js]
-        T3[MediaPipe]
-        T4[Git]
-    end
+## 📄 License & Credits
 
-    subgraph Challenges
-        C1[Calibrating Camera]
-        C2[Intuitive UI]
-        C3[Real-time Tracking]
-        C4[Ergonomic Challenges]
-        C5[Accuracy of Tracking]
-    end
-
-    B --> T1
-    B --> T2
-    B --> T3
-    B --> T4
-    B --> T5
-
-    G --> C1
-    G --> C2
-    G --> C3
-    G --> C4
-    G --> C5
+Project created as part of university coursework.
+Uses TensorFlow.js and MoveNet under Apache 2.0 license.
