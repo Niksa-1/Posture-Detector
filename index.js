@@ -17,6 +17,14 @@ let relaxedPosition = null;
 let timerId = null;
 let lastFrameTime = 0;
 let canvasScale = 1;
+let calibratedNoseY = null; // Nose Y position during upright calibration
+let calibratedShoulderY = null; // Average shoulder Y position during upright calibration
+let calibratedShoulderSpan = null; // Distance between shoulders (for scale reference)
+let calibratedNoseShoulderOffset = null; // Vertical offset between nose and shoulders when upright
+let relaxedNoseShoulderOffset = null; // Vertical offset when relaxed/slouched
+let postureThreshold = null; // Calculated threshold from upright-relaxed difference
+let badPostureStartTime = null; // Timestamp when bad posture was first detected
+const BAD_POSTURE_DURATION_MS = 15000; // 15 seconds in milliseconds
 
 // DOM Elements Cache
 const elements = {
@@ -30,7 +38,10 @@ const elements = {
     thresholdSlider: null,
     thresholdValue: null,
     postureAlert: null,
-    beepSound: null
+    beepSound: null,
+    postureTimer: null,
+    timerProgress: null,
+    timerCountdown: null
 };
 
 // ============================================
@@ -52,29 +63,37 @@ function cacheElements() {
     elements.thresholdValue = document.getElementById('thresholdValue');
     elements.postureAlert = document.getElementById('postureAlert');
     elements.beepSound = document.getElementById('beepSound');
+    elements.postureTimer = document.getElementById('postureTimer');
+    elements.timerProgress = document.getElementById('timerProgress');
+    elements.timerCountdown = document.getElementById('timerCountdown');
+    
+    console.log('Timer elements loaded:', {
+        postureTimer: !!elements.postureTimer,
+        timerProgress: !!elements.timerProgress,
+        timerCountdown: !!elements.timerCountdown
+    });
 }
 
 /**
- * Initialize TensorFlow face detector
+ * Initialize MoveNet pose detector
  */
-async function initializeFaceDetector() {
+async function initializePoseDetector() {
     try {
-        if (!faceDetection) {
-            console.error('Face detection library not loaded');
+        if (!poseDetection) {
+            console.error('Pose detection library not loaded');
             return false;
         }
 
-        const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
+        const model = poseDetection.SupportedModels.MoveNet;
         const detectorConfig = {
-            runtime: 'mediapipe',
-            solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection'
+            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
         };
 
-        detector = await faceDetection.createDetector(model, detectorConfig);
-        console.log('✓ Face detector initialized successfully');
+        detector = await poseDetection.createDetector(model, detectorConfig);
+        console.log('✓ Pose detector initialized successfully');
         return true;
     } catch (err) {
-        console.error('✗ Failed to initialize face detector:', err);
+        console.error('✗ Failed to initialize pose detector:', err);
         return false;
     }
 }
@@ -85,7 +104,7 @@ async function initializeFaceDetector() {
 async function onTensorFlowReady() {
     console.log('TensorFlow.js is ready.');
     
-    const initialized = await initializeFaceDetector();
+    const initialized = await initializePoseDetector();
     if (initialized && elements.startBtn) {
         elements.startBtn.disabled = false;
     }
@@ -139,51 +158,79 @@ function setupCanvas() {
 // ============================================
 
 /**
- * Detect faces in the current video frame
+ * Detect pose in the current video frame
  */
-async function detectFaces() {
+async function detectPose() {
     if (!detector || !elements.video) return [];
     try {
-        return await detector.estimateFaces(elements.video, false);
+        return await detector.estimatePoses(elements.video);
     } catch (err) {
-        console.error('Error detecting faces:', err);
+        console.error('Error detecting pose:', err);
         return [];
     }
 }
 
 /**
- * Draw face bounding boxes on canvas
+ * Draw pose skeleton on canvas
  */
-function drawFaceBoxes(faces) {
+function drawSkeleton(poses) {
     if (!elements.canvasCtx) return;
 
     const ctx = elements.canvasCtx;
-    ctx.strokeStyle = '#00FF00';
-    ctx.lineWidth = 2;
-    ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
-
-    faces.forEach(face => {
-        const { xMin, yMin, width, height } = face.box;
-        ctx.strokeRect(xMin * canvasScale, yMin * canvasScale, width * canvasScale, height * canvasScale);
-        ctx.fillRect(xMin * canvasScale, yMin * canvasScale, width * canvasScale, height * canvasScale);
+    
+    poses.forEach(pose => {
+        if (!pose.keypoints) return;
+        
+        // Draw connections for upper body only (no hands/wrists)
+        const connections = [
+            ['left_shoulder', 'right_shoulder'],
+            ['left_shoulder', 'nose'],
+            ['right_shoulder', 'nose'],
+            ['left_shoulder', 'left_ear'],
+            ['right_shoulder', 'right_ear'],
+            ['nose', 'left_eye'],
+            ['nose', 'right_eye'],
+            ['left_shoulder', 'left_elbow'],
+            ['right_shoulder', 'right_elbow']
+        ];
+        
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 2;
+        
+        connections.forEach(([start, end]) => {
+            const kpStart = pose.keypoints.find(kp => kp.name === start);
+            const kpEnd = pose.keypoints.find(kp => kp.name === end);
+            
+            if (kpStart && kpEnd && kpStart.score > 0.3 && kpEnd.score > 0.3) {
+                ctx.beginPath();
+                ctx.moveTo(kpStart.x * canvasScale, kpStart.y * canvasScale);
+                ctx.lineTo(kpEnd.x * canvasScale, kpEnd.y * canvasScale);
+                ctx.stroke();
+            }
+        });
     });
 }
 
 /**
- * Draw facial keypoints on canvas
+ * Draw pose keypoints on canvas
  */
-function drawKeypoints(faces) {
+function drawKeypoints(poses) {
     if (!elements.canvasCtx) return;
 
     const ctx = elements.canvasCtx;
-    ctx.fillStyle = '#FF0000';
-
-    faces.forEach(face => {
-        if (face.keypoints) {
-            face.keypoints.forEach(kp => {
-                ctx.beginPath();
-                ctx.arc(kp.x * canvasScale, kp.y * canvasScale, 3, 0, 2 * Math.PI);
-                ctx.fill();
+    
+    // Exclude hand-related keypoints
+    const excludeKeypoints = ['left_wrist', 'right_wrist'];
+    
+    poses.forEach(pose => {
+        if (pose.keypoints) {
+            pose.keypoints.forEach(kp => {
+                if (kp.score > 0.3 && !excludeKeypoints.includes(kp.name)) {
+                    ctx.fillStyle = kp.score > 0.5 ? '#FF0000' : '#FFA500';
+                    ctx.beginPath();
+                    ctx.arc(kp.x * canvasScale, kp.y * canvasScale, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
             });
         }
     });
@@ -192,11 +239,11 @@ function drawKeypoints(faces) {
 /**
  * Draw threshold line on canvas
  */
-function drawThresholdLine() {
-    if (!elements.canvasCtx || !elements.canvas || !elements.thresholdSlider) return;
+function drawThresholdLine(thresholdPx) {
+    if (!elements.canvasCtx || !elements.canvas) return;
 
     const ctx = elements.canvasCtx;
-    const threshold = parseInt(elements.thresholdSlider.value) * canvasScale;
+    const threshold = thresholdPx * canvasScale;
 
     ctx.strokeStyle = '#00FFFF';
     ctx.lineWidth = 3;
@@ -207,26 +254,95 @@ function drawThresholdLine() {
 }
 
 /**
- * Check posture and trigger alerts if needed
+ * Get current nose-shoulder offset with validation
  */
-function checkPosture(faces) {
-    if (!elements.thresholdSlider || !elements.postureAlert || !elements.beepSound) return;
+function getNoseShoulderOffset(pose) {
+    const nose = pose.keypoints.find(kp => kp.name === 'nose');
+    const leftShoulder = pose.keypoints.find(kp => kp.name === 'left_shoulder');
+    const rightShoulder = pose.keypoints.find(kp => kp.name === 'right_shoulder');
 
-    const threshold = parseInt(elements.thresholdSlider.value);
+    if (!nose || !leftShoulder || !rightShoulder || 
+        nose.score < 0.3 || leftShoulder.score < 0.3 || rightShoulder.score < 0.3) {
+        return null;
+    }
+
+    const shoulderAvgY = (leftShoulder.y + rightShoulder.y) / 2;
+    return nose.y - shoulderAvgY;
+}
+
+/**
+ * Check posture using nose-shoulder offset
+ */
+function checkPosture(poses) {
+    if (!elements.postureAlert || !elements.beepSound || !calibratedNoseShoulderOffset || !postureThreshold) return;
+
     let badPostureDetected = false;
 
-    faces.forEach(face => {
-        const faceTop = face.box.yMin;
-        if (faceTop > threshold) {
-            badPostureDetected = true;
+    if (poses.length > 0) {
+        const pose = poses[0];
+        const currentOffset = getNoseShoulderOffset(pose);
+        
+        if (currentOffset !== null) {
+            // Normalize measurements by distance to make threshold consistent
+            let normalizedOffset = currentOffset;
+            let normalizedCalibratedOffset = calibratedNoseShoulderOffset;
+            
+            const leftShoulder = pose.keypoints.find(kp => kp.name === 'left_shoulder');
+            const rightShoulder = pose.keypoints.find(kp => kp.name === 'right_shoulder');
+            if (leftShoulder && rightShoulder && calibratedShoulderSpan) {
+                const currentSpan = Math.abs(leftShoulder.x - rightShoulder.x);
+                const distanceScale = currentSpan / calibratedShoulderSpan;
+                // Normalize current offset to calibration distance
+                normalizedOffset = currentOffset / distanceScale;
+            }
+            
+            // Check if head dropped significantly relative to calibrated upright position
+            const offsetChange = normalizedOffset - normalizedCalibratedOffset;
+            if (offsetChange > postureThreshold) {
+                badPostureDetected = true;
+            }
         }
-    });
+    }
 
+    // Require 15 seconds of continuous bad posture before alerting
     if (badPostureDetected) {
-        elements.postureAlert.style.display = 'block';
-        elements.postureAlert.classList.add('show');
-        elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+        if (badPostureStartTime === null) {
+            badPostureStartTime = Date.now();
+            console.log('Bad posture detected, starting timer');
+        }
+        
+        const elapsed = Date.now() - badPostureStartTime;
+        const progress = (elapsed / BAD_POSTURE_DURATION_MS) * 100;
+        const remainingSeconds = Math.ceil((BAD_POSTURE_DURATION_MS - elapsed) / 1000);
+        
+        console.log(`Timer progress: ${progress.toFixed(1)}%, ${remainingSeconds}s remaining`);
+        
+        // Show and update progress bar
+        if (elements.postureTimer) {
+            elements.postureTimer.style.display = 'block';
+        }
+        if (elements.timerProgress) {
+            elements.timerProgress.style.width = progress + '%';
+            elements.timerProgress.setAttribute('aria-valuenow', progress);
+        }
+        if (elements.timerCountdown) {
+            elements.timerCountdown.textContent = remainingSeconds > 0 ? remainingSeconds : 0;
+        }
+        
+        if (elapsed >= BAD_POSTURE_DURATION_MS) {
+            console.log('15 seconds elapsed, triggering alert');
+            elements.postureAlert.style.display = 'block';
+            elements.postureAlert.classList.add('show');
+            elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+        }
     } else {
+        if (badPostureStartTime !== null) {
+            console.log('Good posture restored, resetting timer');
+        }
+        badPostureStartTime = null;
+        if (elements.postureTimer) {
+            elements.postureTimer.style.display = 'none';
+        }
         elements.postureAlert.style.display = 'none';
         elements.postureAlert.classList.remove('show');
     }
@@ -261,18 +377,19 @@ async function processFrame() {
         if (isCalibrating) {
             // Just show video, no face detection overlays
         } else {
-            // Tracking mode: show face detection and threshold
-            const faces = await detectFaces();
+            // Tracking mode: show pose detection and check posture
+            const poses = await detectPose();
             
-            // Check posture
-            checkPosture(faces);
+            // Check posture if calibrated
+            if (isCalibrated) {
+                checkPosture(poses);
+            }
+            
+            // Render pose skeleton and keypoints
+            drawSkeleton(poses);
+            drawKeypoints(poses);
 
-            // Render detections
-            drawThresholdLine();
-            drawFaceBoxes(faces);
-            drawKeypoints(faces);
-
-            console.log(`Detected ${faces.length} face(s)`);
+            console.log(`Detected ${poses.length} pose(s)`);
         }
     } catch (err) {
         console.error('Frame processing error:', err);
@@ -295,7 +412,7 @@ async function startTracking() {
         return;
     }
 
-    // If not calibrated, start calibration mode first
+    // Start calibration if not calibrated
     if (!isCalibrated) {
         startCalibration();
         return;
@@ -407,50 +524,55 @@ async function startCalibration() {
 }
 
 /**
- * Confirm calibration and set threshold
+ * Confirm calibration and capture nose-shoulder offset
  */
 async function confirmCalibration() {
     if (!isCalibrating) return;
 
-    // Detect current face position
-    const faces = await detectFaces();
+    // Detect current pose
+    const poses = await detectPose();
     
-    if (faces.length === 0) {
-        alert('No face detected. Please ensure your face is visible and try again.');
+    if (poses.length === 0) {
+        alert('No pose detected. Please ensure your upper body is visible and try again.');
         return;
     }
 
-    const faceTop = faces[0].box.yMin;
+    const pose = poses[0];
+    const offset = getNoseShoulderOffset(pose);
+    
+    if (offset === null) {
+        alert('Could not detect key points (nose and shoulders). Please adjust your position and try again.');
+        return;
+    }
+
+    const leftShoulder = pose.keypoints.find(kp => kp.name === 'left_shoulder');
+    const rightShoulder = pose.keypoints.find(kp => kp.name === 'right_shoulder');
+    const shoulderSpan = Math.abs(leftShoulder.x - rightShoulder.x);
     
     if (calibrationStage === 1) {
         // Store upright position
-        uprightPosition = faceTop;
+        calibratedNoseShoulderOffset = offset;
+        bestNoseShoulderOffset = offset; // Initialize best offset to calibrated upright
+        calibratedShoulderSpan = shoulderSpan;
+        calibratedShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
         calibrationStage = 2;
         
         // Update UI for stage 2
         if (elements.calibrationInstructions) {
-            elements.calibrationInstructions.innerHTML = '<strong>📐 Calibration - Step 2/2</strong><br>Now sit in your typical relaxed posture and click "Confirm Relaxed Position".';
+            elements.calibrationInstructions.innerHTML = '<strong>📐 Calibration - Step 2/2</strong><br>Now sit in your typical relaxed/slouched posture and click "Confirm Relaxed Position".';
         }
         if (elements.confirmCalibrationBtn) {
             elements.confirmCalibrationBtn.textContent = 'Confirm Relaxed Position';
         }
         
-        console.log(`✓ Upright position recorded: ${Math.round(uprightPosition)}px`);
+        console.log(`✓ Upright position recorded. Offset: ${Math.round(offset)}px`);
     } else if (calibrationStage === 2) {
         // Store relaxed position
-        relaxedPosition = faceTop;
+        relaxedNoseShoulderOffset = offset;
         
-        // Calculate threshold: midpoint between upright and relaxed, slightly favoring upright
-        // Formula: upright + (relaxed - upright) * 0.4
-        const thresholdValue = Math.round(uprightPosition + (relaxedPosition - uprightPosition) * 0.4);
-        
-        // Update slider
-        if (elements.thresholdSlider) {
-            elements.thresholdSlider.value = thresholdValue;
-        }
-        if (elements.thresholdValue) {
-            elements.thresholdValue.textContent = thresholdValue;
-        }
+        // Calculate threshold: 40% of the difference between relaxed and upright
+        const offsetDifference = Math.abs(relaxedNoseShoulderOffset - calibratedNoseShoulderOffset);
+        postureThreshold = Math.round(offsetDifference * 0.4);
         
         // Complete calibration
         isCalibrating = false;
@@ -468,8 +590,8 @@ async function confirmCalibration() {
             elements.startBtn.style.display = 'inline-block';
         }
 
-        console.log(`✓ Relaxed position recorded: ${Math.round(relaxedPosition)}px`);
-        console.log(`✓ Calibration complete. Threshold set to ${thresholdValue}px`);
+        console.log(`✓ Relaxed position recorded. Offset: ${Math.round(offset)}px`);
+        console.log(`✓ Calibration complete. Threshold set to ${postureThreshold}px (40% of ${Math.round(offsetDifference)}px difference)`);
         
         // Automatically start tracking after calibration
         await startTracking();
@@ -501,8 +623,9 @@ window.addEventListener('load', onTensorFlowReady);
 // SERVICE WORKER (PWA)
 // ============================================
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('✓ Service worker registered', reg))
-        .catch(err => console.log('✗ Service worker registration failed:', err));
-}
+// Service worker temporarily disabled
+// if ('serviceWorker' in navigator) {
+//     navigator.serviceWorker.register('/sw.js')
+//         .then(reg => console.log('✓ Service worker registered', reg))
+//         .catch(err => console.log('✗ Service worker registration failed:', err));
+// }
