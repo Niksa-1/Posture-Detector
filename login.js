@@ -1,10 +1,76 @@
+// User data storage
+
+const UserStorage = {
+    // TODO: Replace with API endpoint: POST /api/auth/register
+    saveUser(userData) {
+        const users = this.getAllUsers();
+        users.push({
+            id: Date.now().toString(),
+            name: userData.name,
+            email: userData.email.toLowerCase(),
+            password: userData.password, // TODO: Backend should hash this
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('users', JSON.stringify(users));
+        return true;
+    },
+
+    // TODO: Replace with API endpoint: POST /api/auth/login
+    authenticateUser(email, password) {
+        const users = this.getAllUsers();
+        const user = users.find(u => 
+            u.email === email.toLowerCase() && u.password === password
+        );
+        return user || null;
+    },
+
+    // TODO: Replace with API endpoint: GET /api/users/:email
+    getUserByEmail(email) {
+        const users = this.getAllUsers();
+        return users.find(u => u.email === email.toLowerCase());
+    },
+
+    getAllUsers() {
+        const usersJson = localStorage.getItem('users');
+        return usersJson ? JSON.parse(usersJson) : [];
+    },
+
+    // Session management
+    setCurrentUser(user) {
+        const sessionData = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            loginTime: new Date().toISOString()
+        };
+        localStorage.setItem('currentUser', JSON.stringify(sessionData));
+        
+        // If "Remember Me" was checked, store in longer-term storage
+        if (localStorage.getItem('rememberMe') === 'true') {
+            localStorage.setItem('rememberedUser', user.email);
+        }
+    },
+
+    getCurrentUser() {
+        const userData = localStorage.getItem('currentUser');
+        return userData ? JSON.parse(userData) : null;
+    },
+
+    logout() {
+        localStorage.removeItem('currentUser');
+        if (localStorage.getItem('rememberMe') !== 'true') {
+            localStorage.removeItem('rememberedUser');
+        }
+    }
+};
+
+// UI functions
+
 function switchTab(tab) {
-    // Update tab buttons
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
 
-    // Update form content
     const forms = document.querySelectorAll('.form-content');
     forms.forEach(form => form.classList.remove('active'));
 
@@ -35,16 +101,43 @@ function togglePassword(inputId, button) {
     }
 }
 
+function showMessage(message, type = 'info') {
+    // Create a toast-style message
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    messageDiv.style.zIndex = '9999';
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
+
+// Form handlers
+
 function handleLogin(event) {
     event.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
     
-    // Here you would normally send this to your backend
-    console.log('Login attempt:', { email, password });
+    // Store remember me preference
+    localStorage.setItem('rememberMe', rememberMe.toString());
     
-    alert('Login functionality will be connected to backend. For now, redirecting to home...');
-    window.location.href = 'index.html';
+    // Authenticate user
+    const user = UserStorage.authenticateUser(email, password);
+    
+    if (user) {
+        UserStorage.setCurrentUser(user);
+        showMessage(`Welcome back, ${user.name}!`, 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    } else {
+        showMessage('Invalid email or password. Please try again.', 'danger');
+    }
 }
 
 function handleRegister(event) {
@@ -54,14 +147,45 @@ function handleRegister(event) {
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     
+    // Validation
     if (password !== confirmPassword) {
-        alert('Passwords do not match!');
+        showMessage('Passwords do not match!', 'danger');
         return;
     }
     
-    // Here you would normally send this to your backend
-    console.log('Register attempt:', { name, email, password });
+    if (password.length < 8) {
+        showMessage('Password must be at least 8 characters long.', 'danger');
+        return;
+    }
     
-    alert('Registration functionality will be connected to backend. Welcome! Redirecting...');
-    window.location.href = 'index.html';
+    // Check if user already exists
+    if (UserStorage.getUserByEmail(email)) {
+        showMessage('An account with this email already exists.', 'danger');
+        return;
+    }
+    
+    // Register new user
+    const userData = { name, email, password };
+    UserStorage.saveUser(userData);
+    
+    // Auto-login after registration
+    const newUser = UserStorage.getUserByEmail(email);
+    UserStorage.setCurrentUser(newUser);
+    
+    showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
+    
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1500);
 }
+
+// Initialization
+
+// Pre-fill email if "Remember Me" was used
+window.addEventListener('DOMContentLoaded', () => {
+    const rememberedEmail = localStorage.getItem('rememberedUser');
+    if (rememberedEmail) {
+        document.getElementById('loginEmail').value = rememberedEmail;
+        document.getElementById('rememberMe').checked = true;
+    }
+});
