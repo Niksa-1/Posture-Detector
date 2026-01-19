@@ -75,12 +75,13 @@
                     <div class="form-group">
                         <label for="registerPassword">Password</label>
                         <div class="password-toggle">
-                            <input type="password" id="registerPassword" class="form-control" placeholder="Create a password" required minlength="8">
+                            <input type="password" id="registerPassword" class="form-control" placeholder="Create a password" required minlength="8" oninput="updatePasswordStrength('registerPassword', 'passwordStrengthIndicator')">
                             <button type="button" class="toggle-password" onclick="togglePassword('registerPassword', this)">
                                 <span class="eye-open">👁️</span>
                                 <span class="eye-closed" style="display: none;">👁️‍🗨️</span>
                             </button>
                         </div>
+                        <div id="passwordStrengthIndicator" style="display: none; margin-top: 5px;"></div>
                     </div>
 
                     <div class="form-group">

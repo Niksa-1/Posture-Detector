@@ -64,6 +64,50 @@ const UserStorage = {
     }
 };
 
+// Validation functions
+
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function checkPasswordStrength(password) {
+    let strength = 0;
+    let feedback = '';
+    
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    if (strength <= 2) {
+        feedback = 'Weak';
+        return { strength: 'weak', feedback, color: '#dc3545' };
+    } else if (strength <= 3) {
+        feedback = 'Medium';
+        return { strength: 'medium', feedback, color: '#ffc107' };
+    } else {
+        feedback = 'Strong';
+        return { strength: 'strong', feedback, color: '#28a745' };
+    }
+}
+
+function updatePasswordStrength(inputId, indicatorId) {
+    const password = document.getElementById(inputId).value;
+    const indicator = document.getElementById(indicatorId);
+    
+    if (!password) {
+        indicator.style.display = 'none';
+        return;
+    }
+    
+    const result = checkPasswordStrength(password);
+    indicator.style.display = 'block';
+    indicator.style.color = result.color;
+    indicator.innerHTML = `<small>Password strength: <strong>${result.feedback}</strong></small>`;
+}
+
 // UI functions
 
 function switchTab(tab) {
@@ -121,23 +165,41 @@ function handleLogin(event) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    
+    // Email validation
+    if (!validateEmail(email)) {
+        showMessage('Please enter a valid email address.', 'danger');
+        return;
+    }
+    
+    // Loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging in...';
     
     // Store remember me preference
     localStorage.setItem('rememberMe', rememberMe.toString());
     
-    // Authenticate user
-    const user = UserStorage.authenticateUser(email, password);
-    
-    if (user) {
-        UserStorage.setCurrentUser(user);
-        showMessage(`Welcome back, ${user.name}!`, 'success');
+    // Simulate async operation
+    setTimeout(() => {
+        // Authenticate user
+        const user = UserStorage.authenticateUser(email, password);
         
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-    } else {
-        showMessage('Invalid email or password. Please try again.', 'danger');
-    }
+        if (user) {
+            UserStorage.setCurrentUser(user);
+            submitBtn.textContent = 'Success!';
+            showMessage(`Welcome back, ${user.name}!`, 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            showMessage('Invalid email or password. Please try again.', 'danger');
+        }
+    }, 500);
 }
 
 function handleRegister(event) {
@@ -146,6 +208,13 @@ function handleRegister(event) {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    
+    // Email validation
+    if (!validateEmail(email)) {
+        showMessage('Please enter a valid email address.', 'danger');
+        return;
+    }
     
     // Validation
     if (password !== confirmPassword) {
@@ -164,19 +233,28 @@ function handleRegister(event) {
         return;
     }
     
-    // Register new user
-    const userData = { name, email, password };
-    UserStorage.saveUser(userData);
+    // Loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating Account...';
     
-    // Auto-login after registration
-    const newUser = UserStorage.getUserByEmail(email);
-    UserStorage.setCurrentUser(newUser);
-    
-    showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
-    
+    // Simulate async operation
     setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1500);
+        // Register new user
+        const userData = { name, email, password };
+        UserStorage.saveUser(userData);
+        
+        // Auto-login after registration
+        const newUser = UserStorage.getUserByEmail(email);
+        UserStorage.setCurrentUser(newUser);
+        
+        submitBtn.textContent = 'Account Created!';
+        showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+    }, 500);
 }
 
 // Initialization
