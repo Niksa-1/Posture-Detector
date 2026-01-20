@@ -146,6 +146,10 @@ function togglePassword(inputId, button) {
 }
 
 function showMessage(message, type = 'info') {
+    // Remove any existing messages first
+    const existingMessages = document.querySelectorAll('.alert');
+    existingMessages.forEach(msg => msg.remove());
+    
     // Create a toast-style message
     const messageDiv = document.createElement('div');
     messageDiv.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
@@ -158,12 +162,45 @@ function showMessage(message, type = 'info') {
     }, 3000);
 }
 
+function clearErrorsOnInput() {
+    // Remove any visible error messages when user starts typing
+    const existingMessages = document.querySelectorAll('.alert-danger');
+    existingMessages.forEach(msg => msg.remove());
+}
+
+function validateForm(formId) {
+    const form = document.getElementById(formId);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll('input[required]');
+    
+    function checkValidity() {
+        let allFilled = true;
+        inputs.forEach(input => {
+            if (!input.value.trim() || (input.type === 'checkbox' && !input.checked)) {
+                allFilled = false;
+            }
+        });
+        submitBtn.disabled = !allFilled;
+    }
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            checkValidity();
+            clearErrorsOnInput();
+        });
+        input.addEventListener('change', checkValidity);
+    });
+    
+    // Initial check
+    checkValidity();
+}
+
 // Form handlers
 
 function handleLogin(event) {
     event.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
     const rememberMe = document.getElementById('rememberMe').checked;
     const submitBtn = event.target.querySelector('button[type="submit"]');
     
@@ -204,12 +241,43 @@ function handleLogin(event) {
 
 function handleRegister(event) {
     event.preventDefault();
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value.trim();
+    const confirmPassword = document.getElementById('confirmPassword').value.trim();
     const submitBtn = event.target.querySelector('button[type="submit"]');
     
+    // Check for empty fields
+    if (!name) {
+        showMessage('Please enter your full name.', 'danger');
+        document.getElementById('registerName').focus();
+        return;
+    }
+    
+    if (!email) {
+        showMessage('Please enter your email address.', 'danger');
+        document.getElementById('registerEmail').focus();
+        return;
+    }
+    
+    if (!password) {
+        showMessage('Please enter a password.', 'danger');
+        document.getElementById('registerPassword').focus();
+        return;
+    }
+    
+    if (!confirmPassword) {
+        showMessage('Please confirm your password.', 'danger');
+        document.getElementById('confirmPassword').focus();
+        return;
+    }
+    
+    if (!document.getElementById('agreeTerms').checked) {
+        showMessage('Please agree to the Terms & Conditions.', 'danger');
+        document.getElementById('agreeTerms').focus();
+        return;
+    }
+
     // Email validation
     if (!validateEmail(email)) {
         showMessage('Please enter a valid email address.', 'danger');
@@ -266,4 +334,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginEmail').value = rememberedEmail;
         document.getElementById('rememberMe').checked = true;
     }
+
+    validateForm('loginForm');
+    validateForm('registerForm');
 });
