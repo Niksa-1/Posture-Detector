@@ -1,42 +1,66 @@
-// User data storage
+// API CONFIGURATION
+const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
+
+// API FUNCTIONS
+
+async function registerUser(name, email, password) {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+    }
+    
+    return data;
+}
+
+async function loginUser(email, password) {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+    }
+    
+    return data;
+}
+
+async function getCurrentUser(token) {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        }
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(data.message || 'Failed to get user data');
+    }
+    
+    return data;
+}
+
+// USER STORAGE SERVICE (Updated for API)
 
 const UserStorage = {
-    // TODO: Replace with API endpoint: POST /api/auth/register
-    saveUser(userData) {
-        const users = this.getAllUsers();
-        users.push({
-            id: Date.now().toString(),
-            name: userData.name,
-            email: userData.email.toLowerCase(),
-            password: userData.password, // TODO: Backend should hash this
-            createdAt: new Date().toISOString()
-        });
-        localStorage.setItem('users', JSON.stringify(users));
-        return true;
-    },
-
-    // TODO: Replace with API endpoint: POST /api/auth/login
-    authenticateUser(email, password) {
-        const users = this.getAllUsers();
-        const user = users.find(u => 
-            u.email === email.toLowerCase() && u.password === password
-        );
-        return user || null;
-    },
-
-    // TODO: Replace with API endpoint: GET /api/users/:email
-    getUserByEmail(email) {
-        const users = this.getAllUsers();
-        return users.find(u => u.email === email.toLowerCase());
-    },
-
-    getAllUsers() {
-        const usersJson = localStorage.getItem('users');
-        return usersJson ? JSON.parse(usersJson) : [];
-    },
-
-    // Session management
-    setCurrentUser(user) {
+    setCurrentUser(user, token) {
         const sessionData = {
             id: user.id,
             name: user.name,
@@ -44,8 +68,9 @@ const UserStorage = {
             loginTime: new Date().toISOString()
         };
         localStorage.setItem('currentUser', JSON.stringify(sessionData));
+        localStorage.setItem('authToken', token);
         
-        // If "Remember Me" was checked, store in longer-term storage
+        // If "Remember Me" was checked, store email
         if (localStorage.getItem('rememberMe') === 'true') {
             localStorage.setItem('rememberedUser', user.email);
         }
@@ -56,15 +81,20 @@ const UserStorage = {
         return userData ? JSON.parse(userData) : null;
     },
 
+    getAuthToken() {
+        return localStorage.getItem('authToken');
+    },
+
     logout() {
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
         if (localStorage.getItem('rememberMe') !== 'true') {
             localStorage.removeItem('rememberedUser');
         }
     }
 };
 
-// Validation functions
+// VALIDATION FUNCTIONS
 
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -108,7 +138,51 @@ function updatePasswordStrength(inputId, indicatorId) {
     indicator.innerHTML = `<small>Password strength: <strong>${result.feedback}</strong></small>`;
 }
 
-// UI functions
+// VALIDATION FUNCTIONS
+
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function checkPasswordStrength(password) {
+    let strength = 0;
+    let feedback = '';
+    
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    if (strength <= 2) {
+        feedback = 'Weak';
+        return { strength: 'weak', feedback, color: '#dc3545' };
+    } else if (strength <= 3) {
+        feedback = 'Medium';
+        return { strength: 'medium', feedback, color: '#ffc107' };
+    } else {
+        feedback = 'Strong';
+        return { strength: 'strong', feedback, color: '#28a745' };
+    }
+}
+
+function updatePasswordStrength(inputId, indicatorId) {
+    const password = document.getElementById(inputId).value;
+    const indicator = document.getElementById(indicatorId);
+    
+    if (!password) {
+        indicator.style.display = 'none';
+        return;
+    }
+    
+    const result = checkPasswordStrength(password);
+    indicator.style.display = 'block';
+    indicator.style.color = result.color;
+    indicator.innerHTML = `<small>Password strength: <strong>${result.feedback}</strong></small>`;
+}
+
+// UI FUNCTIONS
 
 function switchTab(tab) {
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -195,7 +269,7 @@ function validateForm(formId) {
     checkValidity();
 }
 
-// Form handlers
+// FORM HANDLERS
 
 function handleLogin(event) {
     event.preventDefault();
@@ -204,9 +278,23 @@ function handleLogin(event) {
     const rememberMe = document.getElementById('rememberMe').checked;
     const submitBtn = event.target.querySelector('button[type="submit"]');
     
+    // Check for empty fields
+    if (!email) {
+        showMessage('Please enter your email address.', 'danger');
+        document.getElementById('loginEmail').focus();
+        return;
+    }
+    
+    if (!password) {
+        showMessage('Please enter your password.', 'danger');
+        document.getElementById('loginPassword').focus();
+        return;
+    }
+    
     // Email validation
     if (!validateEmail(email)) {
         showMessage('Please enter a valid email address.', 'danger');
+        document.getElementById('loginEmail').focus();
         return;
     }
     
@@ -218,25 +306,22 @@ function handleLogin(event) {
     // Store remember me preference
     localStorage.setItem('rememberMe', rememberMe.toString());
     
-    // Simulate async operation
-    setTimeout(() => {
-        // Authenticate user
-        const user = UserStorage.authenticateUser(email, password);
-        
-        if (user) {
-            UserStorage.setCurrentUser(user);
+    // Call API
+    loginUser(email, password)
+        .then(data => {
+            UserStorage.setCurrentUser(data.user, data.token);
             submitBtn.textContent = 'Success!';
-            showMessage(`Welcome back, ${user.name}!`, 'success');
+            showMessage(`Welcome back, ${data.user.name}!`, 'success');
             
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
-        } else {
+        })
+        .catch(error => {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
-            showMessage('Invalid email or password. Please try again.', 'danger');
-        }
-    }, 500);
+            showMessage(error.message, 'danger');
+        });
 }
 
 function handleRegister(event) {
@@ -277,10 +362,11 @@ function handleRegister(event) {
         document.getElementById('agreeTerms').focus();
         return;
     }
-
+    
     // Email validation
     if (!validateEmail(email)) {
         showMessage('Please enter a valid email address.', 'danger');
+        document.getElementById('registerEmail').focus();
         return;
     }
     
@@ -295,37 +381,30 @@ function handleRegister(event) {
         return;
     }
     
-    // Check if user already exists
-    if (UserStorage.getUserByEmail(email)) {
-        showMessage('An account with this email already exists.', 'danger');
-        return;
-    }
-    
     // Loading state
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating Account...';
     
-    // Simulate async operation
-    setTimeout(() => {
-        // Register new user
-        const userData = { name, email, password };
-        UserStorage.saveUser(userData);
-        
-        // Auto-login after registration
-        const newUser = UserStorage.getUserByEmail(email);
-        UserStorage.setCurrentUser(newUser);
-        
-        submitBtn.textContent = 'Account Created!';
-        showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1500);
-    }, 500);
+    // Call API
+    registerUser(name, email, password)
+        .then(data => {
+            UserStorage.setCurrentUser(data.user, data.token);
+            submitBtn.textContent = 'Account Created!';
+            showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        })
+        .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            showMessage(error.message, 'danger');
+        });
 }
 
-// Initialization
+// INITIALIZATION
 
 // Pre-fill email if "Remember Me" was used
 window.addEventListener('DOMContentLoaded', () => {
@@ -334,7 +413,8 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginEmail').value = rememberedEmail;
         document.getElementById('rememberMe').checked = true;
     }
-
+    
+    // Initialize form validation
     validateForm('loginForm');
     validateForm('registerForm');
 });
