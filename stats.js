@@ -2,6 +2,9 @@
 // DAILY STATS (LocalStorage)
 // ============================================
 
+// CONFIGURATION: Adjust these values as needed
+const CHECKPOINT_INTERVAL_MINUTES = 1; // How often to check for breaks (in minutes)
+
 const STORAGE_PREFIX = 'postureStats:';
 let dailyStats = null;
 let dailyKey = null;
@@ -9,6 +12,11 @@ let currentState = 'unknown'; // 'good' | 'bad' | 'unknown'
 let goodStreakStartTime = null;
 let alertIssuedForCurrentEpisode = false;
 let lastStatsUpdateTime = null; // timestamp of last stats increment
+
+// Break system counters (logic only; UI handled elsewhere)
+let tenMinAlertCount = 0; // Alerts in current checkpoint window
+let lastCheckpointTime = null; // Last checkpoint
+const CHECKPOINT_INTERVAL_MS = CHECKPOINT_INTERVAL_MINUTES * 60 * 1000;
 
 function getTodayKey() {
     const d = new Date();
@@ -48,6 +56,8 @@ function initDailyStats() {
     dailyKey = getTodayKey();
     dailyStats = loadDailyStats(dailyKey);
     lastStatsUpdateTime = null;
+    lastCheckpointTime = Date.now(); // Start checkpoint timer
+    tenMinAlertCount = 0;
     console.log('Stats initialized for', dailyKey, dailyStats);
 }
 
@@ -69,34 +79,4 @@ function formatTime(ms) {
     return `${minutes}m`;
 }
 
-function updateStatsUI() {
-    if (!dailyStats) return;
-    
-    // Show stats panel when tracking starts
-    const statsPanel = document.getElementById('statsPanel');
-    if (statsPanel) {
-        statsPanel.style.display = 'block';
-    }
-
-    const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
-    const goodPct = classifiedMs > 0 ? ((dailyStats.goodMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const badPct = classifiedMs > 0 ? ((dailyStats.badMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const totalTime = formatTime(dailyStats.totalMs);
-    const longestStreak = formatTime(dailyStats.longestGoodStreakMs);
-
-    // Update DOM elements
-    const statGoodPct = document.getElementById('statGoodPct');
-    if (statGoodPct) statGoodPct.textContent = `${goodPct}%`;
-
-    const statBadPct = document.getElementById('statBadPct');
-    if (statBadPct) statBadPct.textContent = `${badPct}%`;
-
-    const statTotalTime = document.getElementById('statTotalTime');
-    if (statTotalTime) statTotalTime.textContent = totalTime;
-
-    const statLongestStreak = document.getElementById('statLongestStreak');
-    if (statLongestStreak) statLongestStreak.textContent = longestStreak;
-
-    const statAlertCount = document.getElementById('statAlertCount');
-    if (statAlertCount) statAlertCount.textContent = dailyStats.alertCount;
-}
+// Checkpoint logic moved to index.js; stats.js remains storage/formatting only.

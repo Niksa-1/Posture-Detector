@@ -25,6 +25,10 @@ let relaxedNoseShoulderOffset = null; // Vertical offset when relaxed/slouched
 let postureThreshold = null; // Calculated threshold from upright-relaxed difference
 let badPostureStartTime = null; // Timestamp when bad posture was first detected
 const BAD_POSTURE_DURATION_MS = 15000; // 15 seconds in milliseconds
+let isBreakPaused = false; // Pause tracking during break cooldown
+let isOnBreak = false;
+let breakEndTime = null;
+let backgroundTimerId = null;
 
 // DOM Elements Cache
 const elements = {
@@ -135,6 +139,83 @@ async function onTensorFlowReady() {
     //     }
     // }
 }
+
+// Pause/resume helpers for break cooldown
+function pauseTrackingForBreak() {
+    isBreakPaused = true;
+    // Prevent stats from accruing break time
+    lastStatsUpdateTime = null;
+    console.log('Tracking paused for break');
+}
+
+function resumeTrackingAfterBreak() {
+    isBreakPaused = false;
+    // Reset timers so next frame starts fresh
+    lastFrameTime = 0;
+    lastStatsUpdateTime = Date.now();
+    console.log('Tracking resumed after break');
+}
+
+// Break state setters/getters for statsUI
+function setBreakState(state) {
+    isOnBreak = state;
+}
+
+function setBreakEndTime(ts) {
+    breakEndTime = ts;
+}
+
+function clearBreakEndTime() {
+    breakEndTime = null;
+}
+
+function getBreakEndTime() {
+    return breakEndTime;
+}
+
+function setBackgroundTimerId(id) {
+    backgroundTimerId = id;
+}
+
+function getBackgroundTimerId() {
+    return backgroundTimerId;
+}
+
+// Break checkpoint logic
+function checkBreakCheckpoint() {
+    if (!lastCheckpointTime) return 0;
+    const now = Date.now();
+    const elapsed = now - lastCheckpointTime;
+
+    if (elapsed >= CHECKPOINT_INTERVAL_MS) {
+        console.log(`${CHECKPOINT_INTERVAL_MINUTES}-min checkpoint: ${tenMinAlertCount} alerts in last ${CHECKPOINT_INTERVAL_MINUTES} minutes`);
+
+        let breakDurationMin = 0;
+        const alertRate = tenMinAlertCount / CHECKPOINT_INTERVAL_MINUTES; // alerts per minute
+
+        if (alertRate >= 1.0) {
+            breakDurationMin = 10;
+        } else if (alertRate >= 0.5) {
+            breakDurationMin = 5;
+        } else if (alertRate >= 0) {
+            breakDurationMin = 2;
+        }
+
+        // Reset checkpoint
+        lastCheckpointTime = now;
+        tenMinAlertCount = 0;
+
+        return breakDurationMin;
+    }
+    return 0;
+}
+
+function incrementTenMinAlertCount() {
+    tenMinAlertCount++;
+    console.log(`${CHECKPOINT_INTERVAL_MINUTES}-min alert count: ${tenMinAlertCount}`);
+}
+
+// (UI + timers moved to statsUI.js)
 
 // ============================================
 // CAMERA & VIDEO SETUP
@@ -306,6 +387,11 @@ function checkPosture(poses) {
     let validPose = false;
     const now = Date.now();
 
+    // If on break, skip posture processing but keep loop alive
+    if (isOnBreak) {
+        return;
+    }
+
     // Increment time-based stats since last update
     if (dailyStats) {
         if (lastStatsUpdateTime === null) {
@@ -329,6 +415,10 @@ function checkPosture(poses) {
             saveDailyStats();
             logStatsDebug();
             updateStatsUI();
+            const breakDuration = checkBreakCheckpoint(); // Check for checkpoint break
+            if (breakDuration > 0) {
+                showBreakModal(breakDuration);
+            }
         }
     }
 
@@ -418,6 +508,7 @@ function checkPosture(poses) {
             if (dailyStats && !alertIssuedForCurrentEpisode) {
                 alertIssuedForCurrentEpisode = true;
                 dailyStats.alertCount += 1;
+                incrementTenMinAlertCount(); // Increment checkpoint counter
                 saveDailyStats();
                 logStatsDebug();
                 updateStatsUI();
@@ -445,6 +536,12 @@ function checkPosture(poses) {
  */
 async function processFrame() {
     if ((!isTracking && !isCalibrating) || !elements.video || !elements.canvas || !elements.canvasCtx) {
+        return;
+    }
+
+    // Pause all processing during break cooldowns
+    if (isBreakPaused) {
+        timerId = setTimeout(processFrame, FRAME_DELAY);
         return;
     }
 
@@ -697,6 +794,7 @@ async function confirmCalibration() {
 document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
     initDailyStats();
+    startBackgroundTimers();
     if (elements.startBtn) {
         elements.startBtn.addEventListener('click', startTracking);
     }
@@ -710,15 +808,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.addEventListener('load', onTensorFlowReady);
+window.addEventListener('load', () => {
+    onTensorFlowReady();
+    registerServiceWorker();
+});
 
 // ============================================
 // SERVICE WORKER (PWA)
 // ============================================
 
-// Service worker temporarily disabled
-// if ('serviceWorker' in navigator) {
-//     navigator.serviceWorker.register('/sw.js')
-//         .then(reg => console.log('✓ Service worker registered', reg))
-//         .catch(err => console.log('✗ Service worker registration failed:', err));
-// }
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.register('/sw.js')
+        .then((reg) => {
+            console.log('✓ Service worker registered', reg);
+
+            // If there's an already waiting worker, tell it to take over immediately
+            if (reg.waiting) {
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                });
+            });
+        })
+        .catch((err) => console.log('✗ Service worker registration failed:', err));
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Reload so the new service worker version controls the page immediately
+        window.location.reload();
+    });
+}
