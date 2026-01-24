@@ -99,7 +99,7 @@
 
                 <!-- Stats Panel -->
                 <div id="statsPanel" class="alert alert-info mt-3" role="alert" style="display:none;">
-                    <h3>📊 Session Statistics</h3>
+                    <h3>📊 PRIVREMENI STATS PANEL</h3>
                     <div class="row mt-2 g-2">
                         <div class="col-md-3 col-sm-6">
                             <div class="stat-card">
@@ -135,6 +135,10 @@
                 </div>
                 <!-- End Stats Panel -->
 
+                <div id="nextBreakContainer" class="alert alert-secondary mt-2" role="alert" style="display:block;">
+                    <strong>Next break:</strong> <span id="nextBreakTimer">--</span>
+                </div>
+
                 <audio id="beepSound" src="./warning.mp3" preload="auto" hidden></audio>
             </div>
 
@@ -145,7 +149,7 @@
                     <div style="font-size: 3rem; font-weight: bold; font-family: 'Monaco', monospace; color: var(--accent-coral); margin: 2rem 0;">
                         <span id="breakCountdown">5:00</span>
                     </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Stand up, stretch, and rest your eyes</p>
+                    <p id="breakReason" style="color: var(--text-secondary); margin-bottom: 2rem; text-align: center;">Stand up, stretch, and rest your eyes</p>
                     <button onclick="closeBreakModal(false)" class="btn btn-secondary">Skip Break</button>
                 </div>
             </div>

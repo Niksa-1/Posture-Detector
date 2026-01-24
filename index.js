@@ -150,31 +150,36 @@ function getBackgroundTimerId() {
 
 // Break checkpoint logic
 function checkBreakCheckpoint() {
-    if (!lastCheckpointTime) return 0;
+    if (!lastCheckpointTime) return null;
     const now = Date.now();
     const elapsed = now - lastCheckpointTime;
 
     if (elapsed >= CHECKPOINT_INTERVAL_MS) {
-        console.log(`${CHECKPOINT_INTERVAL_MINUTES}-min checkpoint: ${tenMinAlertCount} alerts in last ${CHECKPOINT_INTERVAL_MINUTES} minutes`);
+        const alertRate = tenMinAlertCount / CHECKPOINT_INTERVAL_MINUTES; // alerts per minute
 
         let breakDurationMin = 0;
-        const alertRate = tenMinAlertCount / CHECKPOINT_INTERVAL_MINUTES; // alerts per minute
+        let reason = '';
 
         if (alertRate >= 1.0) {
             breakDurationMin = 10;
+            reason = `High alert rate (~${alertRate.toFixed(2)}/min) over last ${CHECKPOINT_INTERVAL_MINUTES}m (${tenMinAlertCount} alerts).`;
         } else if (alertRate >= 0.5) {
             breakDurationMin = 5;
+            reason = `Moderate alert rate (~${alertRate.toFixed(2)}/min) over last ${CHECKPOINT_INTERVAL_MINUTES}m (${tenMinAlertCount} alerts).`;
         } else if (alertRate >= 0) {
             breakDurationMin = 2;
+            reason = `Low alert rate (~${alertRate.toFixed(2)}/min) over last ${CHECKPOINT_INTERVAL_MINUTES}m (${tenMinAlertCount} alerts).`;
         }
+
+        console.log(`${CHECKPOINT_INTERVAL_MINUTES}-min checkpoint: ${tenMinAlertCount} alerts (${alertRate.toFixed(2)}/min), break=${breakDurationMin}m`);
 
         // Reset checkpoint
         lastCheckpointTime = now;
         tenMinAlertCount = 0;
 
-        return breakDurationMin;
+        return breakDurationMin > 0 ? { durationMin: breakDurationMin, reason } : null;
     }
-    return 0;
+    return null;
 }
 
 function incrementTenMinAlertCount() {
@@ -382,9 +387,9 @@ function checkPosture(poses) {
             saveDailyStats();
             logStatsDebug();
             updateStatsUI();
-            const breakDuration = checkBreakCheckpoint(); // Check for checkpoint break
-            if (breakDuration > 0) {
-                showBreakModal(breakDuration);
+            const breakInfo = checkBreakCheckpoint(); // Check for checkpoint break
+            if (breakInfo) {
+                showBreakModal(breakInfo);
             }
         }
     }
