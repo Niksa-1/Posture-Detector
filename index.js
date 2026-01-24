@@ -22,6 +22,8 @@ let relaxedNoseShoulderOffset = null; // Vertical offset when relaxed/slouched
 let postureThreshold = null; // Calculated threshold from upright-relaxed difference
 let badPostureStartTime = null; // Timestamp when bad posture was first detected
 const BAD_POSTURE_DURATION_MS = 15000; // 15 seconds in milliseconds
+let goodPostureStartTime = null; // Timestamp when good posture was first detected
+const GOOD_POSTURE_REQUIRED_MS = 1000; // 1 second of good posture required to reset timer
 let isBreakPaused = false; // Pause tracking during break cooldown
 let isOnBreak = false;
 let breakEndTime = null;
@@ -447,6 +449,9 @@ function checkPosture(poses) {
     }
 
     if (badPostureDetected) {
+        // Reset good posture timer when bad posture is detected
+        goodPostureStartTime = null;
+        
         if (badPostureStartTime === null) {
             badPostureStartTime = Date.now();
             console.log('Bad posture detected, starting timer');
@@ -489,17 +494,34 @@ function checkPosture(poses) {
             // Previously, a Notification was created here when permission was granted.
         }
     } else {
+        // Good posture detected - require 1 second of continuous good posture
         if (badPostureStartTime !== null) {
-            console.log('Good posture restored, resetting timer');
+            // Start tracking good posture duration
+            if (goodPostureStartTime === null) {
+                goodPostureStartTime = Date.now();
+                console.log('Good posture detected, starting good posture timer');
+            } else {
+                const goodPostureElapsed = Date.now() - goodPostureStartTime;
+                if (goodPostureElapsed >= GOOD_POSTURE_REQUIRED_MS) {
+                    // Sustained good posture for 1 second - reset bad posture timer
+                    console.log('Good posture sustained for 1 second, resetting timer');
+                    badPostureStartTime = null;
+                    goodPostureStartTime = null;
+                    if (elements.postureTimer) {
+                        elements.postureTimer.style.display = 'none';
+                    }
+                    elements.postureAlert.style.display = 'none';
+                    elements.postureAlert.classList.remove('show');
+                    // Reset alert episode flag when posture is no longer bad
+                    alertIssuedForCurrentEpisode = false;
+                } else {
+                    console.log(`Good posture: ${goodPostureElapsed}ms / ${GOOD_POSTURE_REQUIRED_MS}ms`);
+                }
+            }
+        } else {
+            // No bad posture timer active, reset good posture timer
+            goodPostureStartTime = null;
         }
-        badPostureStartTime = null;
-        if (elements.postureTimer) {
-            elements.postureTimer.style.display = 'none';
-        }
-        elements.postureAlert.style.display = 'none';
-        elements.postureAlert.classList.remove('show');
-        // Reset alert episode flag when posture is no longer bad
-        alertIssuedForCurrentEpisode = false;
     }
 }
 
