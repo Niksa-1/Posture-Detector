@@ -69,6 +69,9 @@ function updateBreakCountdownDisplay() {
 }
 
 function backgroundTick() {
+    // Only run break timer if face tracking is active
+    if (typeof isTracking !== 'boolean' || !isTracking) return;
+
     if (typeof isOnBreak === 'boolean' && !isOnBreak) {
         if (typeof checkBreakCheckpoint === 'function') {
             const breakDuration = checkBreakCheckpoint();
