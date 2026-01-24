@@ -82,7 +82,6 @@ Using MoveNet pose detection via TensorFlow.js, the app tracks a user's sitting 
 - ✅ Responsive UI
 - ⏳ Session history/analytics (future)
 - ⏳ User profiles and login (partial - see login.html)
-- ⏳ Mobile app version
 
 ## 🐛 Known Limitations
 
