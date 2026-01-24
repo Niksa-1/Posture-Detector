@@ -78,5 +78,3 @@ function formatTime(ms) {
     const minutes = Math.floor(seconds / 60);
     return `${minutes}m`;
 }
-
-// Checkpoint logic moved to index.js; stats.js remains storage/formatting only.

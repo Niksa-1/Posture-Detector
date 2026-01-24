@@ -12,12 +12,9 @@ let isTracking = false;
 let isCalibrating = false;
 let isCalibrated = false;
 let calibrationStage = 0; // 0: not started, 1: upright, 2: relaxed
-let uprightPosition = null;
-let relaxedPosition = null;
 let timerId = null;
 let lastFrameTime = 0;
 let canvasScale = 1;
-let calibratedNoseY = null; // Nose Y position during upright calibration
 let calibratedShoulderY = null; // Average shoulder Y position during upright calibration
 let calibratedShoulderSpan = null; // Distance between shoulders (for scale reference)
 let calibratedNoseShoulderOffset = null; // Vertical offset between nose and shoulders when upright
@@ -39,8 +36,6 @@ const elements = {
     confirmCalibrationBtn: null,
     calibrationInstructions: null,
     spinner: null,
-    thresholdSlider: null,
-    thresholdValue: null,
     postureAlert: null,
     beepSound: null,
     postureTimer: null,
@@ -63,8 +58,6 @@ function cacheElements() {
     elements.confirmCalibrationBtn = document.getElementById('confirmCalibrationBtn');
     elements.calibrationInstructions = document.getElementById('calibrationInstructions');
     elements.spinner = document.getElementById('spinner');
-    elements.thresholdSlider = document.getElementById('thresholdSlider');
-    elements.thresholdValue = document.getElementById('thresholdValue');
     elements.postureAlert = document.getElementById('postureAlert');
     elements.beepSound = document.getElementById('beepSound');
     elements.postureTimer = document.getElementById('postureTimer');
@@ -112,32 +105,6 @@ async function onTensorFlowReady() {
     if (initialized && elements.startBtn) {
         elements.startBtn.disabled = false;
     }
-    // Notifications disabled per user request.
-    // The following block previously requested Notification permission
-    // and showed a test notification on success. It is now commented out.
-    //
-    // console.log('Checking notification support...');
-    // console.log('Notification in window:', 'Notification' in window);
-    // if ('Notification' in window) {
-    //     console.log('Current permission:', Notification.permission);
-    // }
-    // if ('Notification' in window && Notification.permission === 'default') {
-    //     console.log('Requesting notification permission...');
-    //     try {
-    //         const permission = await Notification.requestPermission();
-    //         console.log('Notification permission result:', permission);
-    //         if (permission === 'granted') {
-    //             console.log('Attempting to show test notification...');
-    //             const testNotif = new Notification('Posture Detector Ready! ✓', {
-    //                 body: 'Notifications are enabled. You will be alerted about poor posture.',
-    //                 tag: 'test-notification'
-    //             });
-    //             console.log('Test notification object created:', testNotif);
-    //         }
-    //     } catch (err) {
-    //         console.error('Notification permission request failed:', err);
-    //     }
-    // }
 }
 
 // Pause/resume helpers for break cooldown
@@ -741,7 +708,6 @@ async function confirmCalibration() {
     if (calibrationStage === 1) {
         // Store upright position
         calibratedNoseShoulderOffset = offset;
-        bestNoseShoulderOffset = offset; // Initialize best offset to calibrated upright
         calibratedShoulderSpan = shoulderSpan;
         calibratedShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
         calibrationStage = 2;
@@ -800,11 +766,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (elements.confirmCalibrationBtn) {
         elements.confirmCalibrationBtn.addEventListener('click', confirmCalibration);
-    }
-    if (elements.thresholdSlider && elements.thresholdValue) {
-        elements.thresholdSlider.addEventListener('input', (e) => {
-            elements.thresholdValue.textContent = e.target.value;
-        });
     }
 });
 

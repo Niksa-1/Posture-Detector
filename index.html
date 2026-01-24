@@ -6,8 +6,8 @@
         <title>Posture Checker</title>
         <meta name="theme-color" content="#3F9AAE">
         <link rel="manifest" href="/manifest.json">
-        <link rel="icon" href="./openCV/icons/icon-192.svg">
-        <link rel="apple-touch-icon" href="./openCV/icons/icon-192.svg">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232b2b2b' width='192' height='192'/><text x='96' y='120' font-size='80' text-anchor='middle' fill='%2300FFFF' font-family='Arial, sans-serif'>🪑</text></svg>">
+        <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232b2b2b' width='192' height='192'/><text x='96' y='120' font-size='80' text-anchor='middle' fill='%2300FFFF' font-family='Arial, sans-serif'>🪑</text></svg>">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="Posture Checker">
@@ -97,9 +97,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
-                <!-- TEMPORARY DEBUG STATS PANEL - Will be removed when proper stats page is implemented -->
+                <!-- Stats Panel -->
                 <div id="statsPanel" class="alert alert-info mt-3" role="alert" style="display:none;">
-                    <h3>📊 Temporary Debug Stats Panel</h3>
+                    <h3>📊 Session Statistics</h3>
                     <div class="row mt-2 g-2">
                         <div class="col-md-3 col-sm-6">
                             <div class="stat-card">
@@ -133,7 +133,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- END TEMPORARY DEBUG STATS PANEL -->
+                <!-- End Stats Panel -->
 
                 <audio id="beepSound" src="./warning.mp3" preload="auto" hidden></audio>
             </div>
@@ -194,8 +194,6 @@
             </div>
 
         </main>
-
-        <h2 id="counter" class="text-center"></h2>
 
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
