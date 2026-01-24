@@ -451,3 +451,42 @@ main {
   box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
   color: white;
 }
+
+/* Stats Panel */
+#statsPanel {
+  background: linear-gradient(135deg, rgba(63, 154, 174, 0.05) 0%, rgba(121, 201, 197, 0.05) 100%);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(63, 154, 174, 0.15);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'Monaco', 'Courier New', monospace;
+}

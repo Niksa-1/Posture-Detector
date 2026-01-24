@@ -108,6 +108,32 @@ async function onTensorFlowReady() {
     if (initialized && elements.startBtn) {
         elements.startBtn.disabled = false;
     }
+    // Notifications disabled per user request.
+    // The following block previously requested Notification permission
+    // and showed a test notification on success. It is now commented out.
+    //
+    // console.log('Checking notification support...');
+    // console.log('Notification in window:', 'Notification' in window);
+    // if ('Notification' in window) {
+    //     console.log('Current permission:', Notification.permission);
+    // }
+    // if ('Notification' in window && Notification.permission === 'default') {
+    //     console.log('Requesting notification permission...');
+    //     try {
+    //         const permission = await Notification.requestPermission();
+    //         console.log('Notification permission result:', permission);
+    //         if (permission === 'granted') {
+    //             console.log('Attempting to show test notification...');
+    //             const testNotif = new Notification('Posture Detector Ready! ✓', {
+    //                 body: 'Notifications are enabled. You will be alerted about poor posture.',
+    //                 tag: 'test-notification'
+    //             });
+    //             console.log('Test notification object created:', testNotif);
+    //         }
+    //     } catch (err) {
+    //         console.error('Notification permission request failed:', err);
+    //     }
+    // }
 }
 
 // ============================================
@@ -277,12 +303,41 @@ function checkPosture(poses) {
     if (!elements.postureAlert || !elements.beepSound || !calibratedNoseShoulderOffset || !postureThreshold) return;
 
     let badPostureDetected = false;
+    let validPose = false;
+    const now = Date.now();
+
+    // Increment time-based stats since last update
+    if (dailyStats) {
+        if (lastStatsUpdateTime === null) {
+            lastStatsUpdateTime = now;
+        } else {
+            const delta = now - lastStatsUpdateTime;
+            dailyStats.totalMs += delta; // Always increment overall tracking time when calibrated
+            if (currentState === 'good') {
+                dailyStats.goodMs += delta;
+                // Update longest good streak live
+                if (goodStreakStartTime) {
+                    const currentGoodStreak = now - goodStreakStartTime;
+                    if (currentGoodStreak > dailyStats.longestGoodStreakMs) {
+                        dailyStats.longestGoodStreakMs = currentGoodStreak;
+                    }
+                }
+            } else if (currentState === 'bad') {
+                dailyStats.badMs += delta;
+            }
+            lastStatsUpdateTime = now;
+            saveDailyStats();
+            logStatsDebug();
+            updateStatsUI();
+        }
+    }
 
     if (poses.length > 0) {
         const pose = poses[0];
         const currentOffset = getNoseShoulderOffset(pose);
         
         if (currentOffset !== null) {
+            validPose = true;
             // Normalize measurements by distance to make threshold consistent
             let normalizedOffset = currentOffset;
             let normalizedCalibratedOffset = calibratedNoseShoulderOffset;
@@ -305,6 +360,30 @@ function checkPosture(poses) {
     }
 
     // Require 15 seconds of continuous bad posture before alerting
+    // Handle posture state transitions for stats
+    const newState = validPose ? (badPostureDetected ? 'bad' : 'good') : 'unknown';
+    if (newState !== currentState) {
+        // Leaving good state: finalize streak duration
+        if (currentState === 'good' && goodStreakStartTime) {
+            const streak = now - goodStreakStartTime;
+            if (streak > dailyStats.longestGoodStreakMs) {
+                dailyStats.longestGoodStreakMs = streak;
+                saveDailyStats();
+                updateStatsUI();
+            }
+            goodStreakStartTime = null;
+        }
+        // Entering good state: start streak
+        if (newState === 'good') {
+            goodStreakStartTime = now;
+        }
+        // Reset alert episode flag when leaving bad state
+        if (currentState === 'bad' && newState !== 'bad') {
+            alertIssuedForCurrentEpisode = false;
+        }
+        currentState = newState;
+    }
+
     if (badPostureDetected) {
         if (badPostureStartTime === null) {
             badPostureStartTime = Date.now();
@@ -334,6 +413,17 @@ function checkPosture(poses) {
             elements.postureAlert.style.display = 'block';
             elements.postureAlert.classList.add('show');
             elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+            
+            // Count alert only once per bad posture episode
+            if (dailyStats && !alertIssuedForCurrentEpisode) {
+                alertIssuedForCurrentEpisode = true;
+                dailyStats.alertCount += 1;
+                saveDailyStats();
+                logStatsDebug();
+                updateStatsUI();
+            }
+            // Native notifications disabled per user request.
+            // Previously, a Notification was created here when permission was granted.
         }
     } else {
         if (badPostureStartTime !== null) {
@@ -345,6 +435,8 @@ function checkPosture(poses) {
         }
         elements.postureAlert.style.display = 'none';
         elements.postureAlert.classList.remove('show');
+        // Reset alert episode flag when posture is no longer bad
+        alertIssuedForCurrentEpisode = false;
     }
 }
 
@@ -604,6 +696,7 @@ async function confirmCalibration() {
 
 document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
+    initDailyStats();
     if (elements.startBtn) {
         elements.startBtn.addEventListener('click', startTracking);
     }
