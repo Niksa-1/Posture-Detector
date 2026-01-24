@@ -43,7 +43,7 @@ Using MoveNet pose detection via TensorFlow.js, the app tracks a user's sitting 
 5. **Calibration Step 2**: Slouch into your typical relaxed posture and click "Confirm Relaxed Position"
 6. The system will automatically calculate your personalized threshold
 7. Maintain good posture - after 15 continuous seconds of slouching, you'll receive an alert
-8. Keep the page open; background timers keep stats and break reminders running (PWA-enabled with auto-updates)
+8. Feel free to minimize window; background timers keep stats and break reminders running (PWA-enabled with auto-updates)
 
 ## 📊 How It Works
 
