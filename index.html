@@ -82,69 +82,6 @@
                         <button class="alert-close" onclick="document.getElementById('postureAlert').style.display='none'">&times;</button>
                     </div>
 
-                    <!-- Stats Panel -->
-                    <section id="analyticsSection" class="analytics-container" style="display: none; margin-top: 2rem;">
-                        <div class="section-header">
-                            <h3 class="control-title">Real-time Posture Analytics</h3>
-                            <p class="control-subtitle">Detailed breakdown of your spinal health and habits.</p>
-                        </div>
-                    
-                        <div class="analytics-grid">
-                            <div class="glass-panel analytics-card">
-                                <div class="card-header">
-                                    <span class="material-symbols-outlined icon-blue">analytics</span>
-                                    <h4>Daily Quality Score</h4>
-                                </div>
-                                <div class="score-display">
-                                    <span id="qualityScoreValue" class="score-number">0%</span>
-                                    <div class="score-bar-bg">
-                                        <div id="qualityScoreBar" class="score-bar-fill" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <p class="card-footer">Ratio of good vs. bad posture today.</p>
-                            </div>
-                    
-                            <div class="glass-panel analytics-card">
-                                <div class="card-header">
-                                    <span class="material-symbols-outlined icon-green">timelapse</span>
-                                    <h4>Total Tracking</h4>
-                                </div>
-                                <div class="time-stats">
-                                    <div class="time-item">
-                                        <span class="time-label">Active Session:</span>
-                                        <span id="totalTimeValue" class="time-value">0h 0m</span>
-                                    </div>
-                                    <div class="time-item sub">
-                                        <span class="time-label">Good Posture:</span>
-                                        <span id="goodTimeValue" class="time-value success">0m</span>
-                                    </div>
-                                    <div class="time-item sub">
-                                        <span class="time-label">Slouched:</span>
-                                        <span id="badTimeValue" class="time-value danger">0m</span>
-                                    </div>
-                                </div>
-                            </div>
-                    
-                            <div class="glass-panel analytics-card">
-                                <div class="card-header">
-                                    <span class="material-symbols-outlined icon-orange">military_tech</span>
-                                    <h4>Discipline</h4>
-                                </div>
-                                <div class="discipline-stats">
-                                    <div class="stat-row">
-                                        <span class="stat-label">Longest Streak:</span>
-                                        <span id="streakValue" class="stat-value">0m</span>
-                                    </div>
-                                    <div class="stat-row">
-                                        <span class="stat-label">Total Alerts:</span>
-                                        <span id="alertCountValue" class="stat-value">0</span>
-                                    </div>
-                                </div>
-                                <p class="card-footer" id="disciplineFeedback">Keep it up! Consistency is key.</p>
-                            </div>
-                        </div>
-                    </section>
-
                     <!-- Next Break Timer -->
                     <div id="nextBreakContainer" class="next-break-alert" style="display:block;">
                         <strong>Next break:</strong> <span id="nextBreakTimer">--</span>
@@ -185,17 +122,68 @@
             </div>
         </div>
 
-        <!-- Break Modal -->
-        <div id="breakModal" class="break-modal" style="display: none;">
-            <div class="break-modal-content">
-                <h2 id="breakTitle" class="break-title">Time for a break!</h2>
-                <div class="break-countdown-display">
-                    <span id="breakCountdown">5:00</span>
-                </div>
-                <p id="breakReason" class="break-reason">Stand up, stretch, and rest your eyes</p>
-                <button onclick="closeBreakModal(false)" class="btn-skip-break">Skip Break</button>
+        <!-- Stats Panel -->
+        <section id="analyticsSection" class="analytics-container" style="display: none; margin-top: 2rem;">
+            <div class="section-header">
+                <h3 class="control-title">Real-time Posture Analytics</h3>
+                <p class="control-subtitle">Detailed breakdown of your spinal health and habits.</p>
             </div>
-        </div>
+        
+            <div class="analytics-grid">
+                <div class="glass-panel analytics-card">
+                    <div class="card-header">
+                        <span class="material-symbols-outlined icon-blue">analytics</span>
+                        <h4>Daily Quality Score</h4>
+                    </div>
+                    <div class="score-display">
+                        <span id="qualityScoreValue" class="score-number">0%</span>
+                        <div class="score-bar-bg">
+                            <div id="qualityScoreBar" class="score-bar-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p class="card-footer">Ratio of good vs. bad posture today.</p>
+                </div>
+        
+                <div class="glass-panel analytics-card">
+                    <div class="card-header">
+                        <span class="material-symbols-outlined icon-green">timelapse</span>
+                        <h4>Total Tracking</h4>
+                    </div>
+                    <div class="time-stats">
+                        <div class="time-item">
+                            <span class="time-label">Active Session:</span>
+                            <span id="totalTimeValue" class="time-value">0h 0m</span>
+                        </div>
+                        <div class="time-item sub">
+                            <span class="time-label">Good Posture:</span>
+                            <span id="goodTimeValue" class="time-value success">0m</span>
+                        </div>
+                        <div class="time-item sub">
+                            <span class="time-label">Slouched:</span>
+                            <span id="badTimeValue" class="time-value danger">0m</span>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="glass-panel analytics-card">
+                    <div class="card-header">
+                        <span class="material-symbols-outlined icon-orange">military_tech</span>
+                        <h4>Discipline</h4>
+                    </div>
+                    <div class="discipline-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Longest Streak:</span>
+                            <span id="streakValue" class="stat-value">0m</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Alerts:</span>
+                            <span id="alertCountValue" class="stat-value">0</span>
+                        </div>
+                    </div>
+                    <p class="card-footer" id="disciplineFeedback">Keep it up! Consistency is key.</p>
+                </div>
+            </div>
+        </section>
 
         <!-- How It Works Section -->
         <div class="section-header">
@@ -294,5 +282,17 @@
     <script>
         window.addEventListener('load', onTensorFlowReady);
     </script>
+
+    <!-- Break Modal -->
+    <div id="breakModal" class="break-modal" style="display: none;">
+        <div class="break-modal-content">
+            <h2 id="breakTitle" class="break-title">Time for a break!</h2>
+            <div class="break-countdown-display">
+                <span id="breakCountdown">5:00</span>
+            </div>
+            <p id="breakReason" class="break-reason">Stand up, stretch, and rest your eyes</p>
+            <button onclick="closeBreakModal(false)" class="btn-skip-break">Skip Break</button>
+        </div>
+    </div>
 </body>
 </html>
