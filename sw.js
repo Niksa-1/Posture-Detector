@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-01-24-2';
+const SW_VERSION = '2026-01-25-1';
 const CACHE_NAME = `posture-checker-${SW_VERSION}`;
 const FILES_TO_CACHE = [
   './',

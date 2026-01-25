@@ -229,6 +229,7 @@ function updateAuthUI() {
     const authToken = UserStorage.getAuthToken();
     const currentUser = UserStorage.getCurrentUser();
     const loginBtn = document.querySelector('.btn-login');
+    const nameLabel = document.querySelector('.user-name-label');
 
     if (!loginBtn) return;
 
@@ -240,11 +241,19 @@ function updateAuthUI() {
             e.preventDefault();
             handleLogout();
         };
+        if (nameLabel) {
+            nameLabel.textContent = currentUser.name || 'User';
+            nameLabel.style.display = 'inline-flex';
+        }
     } else {
         // Logged out → show Login
         loginBtn.textContent = 'Login';
         loginBtn.href = './login.html';
         loginBtn.onclick = null;
+        if (nameLabel) {
+            nameLabel.textContent = '';
+            nameLabel.style.display = 'none';
+        }
     }
 }
 

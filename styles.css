@@ -93,6 +93,22 @@ body {
   justify-content: space-between;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-name-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 194, 204, 0.12);
+  border: 1px solid rgba(0, 194, 204, 0.2);
+  border-radius: 0.75rem;
+  white-space: nowrap;
+}
+
 .logo-section {
   display: flex;
   align-items: center;
