@@ -788,6 +788,57 @@ async function confirmCalibration() {
 }
 
 // ============================================
+// AUTHENTICATION & UI STATE
+// ============================================
+
+const UserStorage = {
+    getCurrentUser() {
+        const userData = localStorage.getItem('currentUser');
+        return userData ? JSON.parse(userData) : null;
+    },
+    getAuthToken() {
+        return localStorage.getItem('authToken');
+    },
+    logout() {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
+        if (localStorage.getItem('rememberMe') !== 'true') {
+            localStorage.removeItem('rememberedUser');
+        }
+    }
+};
+
+function updateAuthUI() {
+    const authToken = UserStorage.getAuthToken();
+    const currentUser = UserStorage.getCurrentUser();
+    const loginBtn = document.querySelector('.btn-login');
+
+    if (!loginBtn) return;
+
+    if (authToken && currentUser) {
+        // User is logged in: Change "Login" to "Logout"
+        loginBtn.textContent = 'Logout';
+        loginBtn.href = '#';
+        loginBtn.onclick = (e) => {
+            e.preventDefault();
+            handleLogout();
+        };
+    } else {
+        // User is logged out: Ensure button says "Login"
+        loginBtn.textContent = 'Login';
+        loginBtn.href = './login.html';
+        loginBtn.onclick = null;
+    }
+}
+
+function handleLogout() {
+    UserStorage.logout();
+    updateAuthUI();
+    // Refresh to clear any active tracking session data
+    window.location.reload();
+}
+
+// ============================================
 // EVENT LISTENERS
 // ============================================
 
@@ -795,6 +846,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
     initDailyStats();
     startBackgroundTimers();
+
+    updateAuthUI();
+    
 
     if (isMobileDevice()) {
         if (elements.startBtn) {

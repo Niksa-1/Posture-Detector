@@ -225,6 +225,29 @@ function validateForm(formId) {
     checkValidity();
 }
 
+function updateAuthUI() {
+    const authToken = UserStorage.getAuthToken();
+    const currentUser = UserStorage.getCurrentUser();
+    const loginBtn = document.querySelector('.btn-login');
+
+    if (!loginBtn) return;
+
+    if (authToken && currentUser) {
+        // Logged in → show Logout
+        loginBtn.textContent = 'Logout';
+        loginBtn.href = '#';
+        loginBtn.onclick = (e) => {
+            e.preventDefault();
+            handleLogout();
+        };
+    } else {
+        // Logged out → show Login
+        loginBtn.textContent = 'Login';
+        loginBtn.href = './login.html';
+        loginBtn.onclick = null;
+    }
+}
+
 // FORM HANDLERS
 
 function handleLogin(event) {
@@ -266,6 +289,7 @@ function handleLogin(event) {
     loginUser(email, password)
         .then(data => {
             UserStorage.setCurrentUser(data.user, data.token);
+            updateAuthUI();
             submitBtn.textContent = 'Success!';
             showMessage(`Welcome back, ${data.user.name}!`, 'success');
             
@@ -346,6 +370,7 @@ function handleRegister(event) {
     registerUser(name, email, password)
         .then(data => {
             UserStorage.setCurrentUser(data.user, data.token);
+            updateAuthUI();
             submitBtn.textContent = 'Account Created!';
             showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
             
@@ -358,6 +383,12 @@ function handleRegister(event) {
             submitBtn.textContent = originalText;
             showMessage(error.message, 'danger');
         });
+}
+
+function handleLogout() {
+    UserStorage.logout();
+    updateAuthUI();
+    window.location.href = './index.html';
 }
 
 // INITIALIZATION
@@ -373,4 +404,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Initialize form validation
     validateForm('loginForm');
     validateForm('registerForm');
+
+    updateAuthUI();
 });
