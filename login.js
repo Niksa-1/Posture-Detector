@@ -57,7 +57,7 @@ async function getCurrentUser(token) {
     return data;
 }
 
-// USER STORAGE SERVICE (Updated for API)
+// USER STORAGE SERVICE
 
 const UserStorage = {
     setCurrentUser(user, token) {
@@ -93,50 +93,6 @@ const UserStorage = {
         }
     }
 };
-
-// VALIDATION FUNCTIONS
-
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function checkPasswordStrength(password) {
-    let strength = 0;
-    let feedback = '';
-    
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-    if (/\d/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
-    
-    if (strength <= 2) {
-        feedback = 'Weak';
-        return { strength: 'weak', feedback, color: '#dc3545' };
-    } else if (strength <= 3) {
-        feedback = 'Medium';
-        return { strength: 'medium', feedback, color: '#ffc107' };
-    } else {
-        feedback = 'Strong';
-        return { strength: 'strong', feedback, color: '#28a745' };
-    }
-}
-
-function updatePasswordStrength(inputId, indicatorId) {
-    const password = document.getElementById(inputId).value;
-    const indicator = document.getElementById(indicatorId);
-    
-    if (!password) {
-        indicator.style.display = 'none';
-        return;
-    }
-    
-    const result = checkPasswordStrength(password);
-    indicator.style.display = 'block';
-    indicator.style.color = result.color;
-    indicator.innerHTML = `<small>Password strength: <strong>${result.feedback}</strong></small>`;
-}
 
 // VALIDATION FUNCTIONS
 
