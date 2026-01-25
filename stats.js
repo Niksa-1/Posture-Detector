@@ -1,8 +1,6 @@
-// ============================================
 // DAILY STATS (LocalStorage)
-// ============================================
+const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
 
-// CONFIGURATION: Adjust these values as needed
 const CHECKPOINT_INTERVAL_MINUTES = 10; // How often to check for breaks (in minutes)
 
 const STORAGE_PREFIX = 'postureStats:';
