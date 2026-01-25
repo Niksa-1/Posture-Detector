@@ -290,9 +290,7 @@ function drawSkeleton(poses) {
             ['left_shoulder', 'left_ear'],
             ['right_shoulder', 'right_ear'],
             ['nose', 'left_eye'],
-            ['nose', 'right_eye'],
-            ['left_shoulder', 'left_elbow'],
-            ['right_shoulder', 'right_elbow']
+            ['nose', 'right_eye']
         ];
         
         ctx.strokeStyle = '#00FF00';
