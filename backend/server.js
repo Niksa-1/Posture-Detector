@@ -250,6 +250,34 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/stats/update', authenticateToken, async (req, res) => {
+  const { total_ms, good_ms, bad_ms, streak_ms, alerts } = req.body;
+  const today = new Date().toISOString().slice(0, 10);
+
+  try {
+    // Upsert logic: Update if exists for this user today, otherwise insert
+    await db.execute({
+      sql: `INSERT INTO user_stats (user_id, date, total_ms, good_ms, bad_ms, longest_streak_ms, alert_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, date) DO UPDATE SET
+              total_ms = ?,
+              good_ms = ?,
+              bad_ms = ?,
+              longest_streak_ms = MAX(longest_streak_ms, ?),
+              alert_count = ?`,
+      args: [
+        req.userId, today, total_ms, good_ms, bad_ms, streak_ms, alerts,
+        total_ms, good_ms, bad_ms, streak_ms, alerts
+      ]
+    });
+
+    res.json({ success: true, message: 'Stats synced successfully' });
+  } catch (error) {
+    console.error('Stats sync error:', error);
+    res.status(500).json({ success: false, message: 'Failed to sync stats' });
+  }
+});
+
 // Logout (optional - mainly for clearing client-side token)
 app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   // In a more complex system, you might invalidate the token here

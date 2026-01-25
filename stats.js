@@ -52,13 +52,22 @@ function saveDailyStats() {
     }
 }
 
-function initDailyStats() {
-    dailyKey = getTodayKey();
-    dailyStats = loadDailyStats(dailyKey);
-    lastStatsUpdateTime = null;
-    lastCheckpointTime = Date.now(); // Start checkpoint timer
-    tenMinAlertCount = 0;
-    console.log('Stats initialized for', dailyKey, dailyStats);
+function saveDailyStats() {
+    if (!dailyKey || !dailyStats) return;
+    
+    // 1. Keep saving to LocalStorage (for instant UI updates)
+    try {
+        localStorage.setItem(STORAGE_PREFIX + dailyKey, JSON.stringify(dailyStats));
+    } catch (e) {
+        console.warn('Failed to save local stats:', e);
+    }
+
+    // 2. Sync to Database every 5 minutes OR when session stops
+    // We check if it's been 5 minutes since the last DB sync
+    if (!window.lastDbSync || Date.now() - window.lastDbSync > 300000) {
+        syncStatsToDatabase();
+        window.lastDbSync = Date.now();
+    }
 }
 
 function formatTime(ms) {
@@ -75,4 +84,34 @@ function formatTimeHMS(ms) {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+async function syncStatsToDatabase() {
+    const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    if (!token || !dailyStats) return;
+
+    const payload = {
+        total_ms: dailyStats.totalMs,
+        good_ms: dailyStats.goodMs,
+        bad_ms: dailyStats.badMs,
+        streak_ms: dailyStats.longestGoodStreakMs,
+        alerts: dailyStats.alertCount
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/stats/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+            console.log('✓ Stats synced to Turso');
+        }
+    } catch (err) {
+        console.error('✗ Stats sync failed:', err);
+    }
 }
