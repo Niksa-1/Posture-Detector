@@ -3,7 +3,7 @@
 // ============================================
 
 // CONFIGURATION: Adjust these values as needed
-const CHECKPOINT_INTERVAL_MINUTES = 10; // How often to check for breaks (in minutes)
+const CHECKPOINT_INTERVAL_MINUTES = 1; // How often to check for breaks (in minutes)
 
 const STORAGE_PREFIX = 'postureStats:';
 let dailyStats = null;
@@ -61,20 +61,18 @@ function initDailyStats() {
     console.log('Stats initialized for', dailyKey, dailyStats);
 }
 
-function logStatsDebug() {
-    if (!dailyStats) return;
-    const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
-    const goodPct = classifiedMs > 0 ? ((dailyStats.goodMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const badPct = classifiedMs > 0 ? ((dailyStats.badMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    console.log(
-        `Stats [${dailyKey}] => total=${Math.round(dailyStats.totalMs/1000)}s, good=${goodPct}%, bad=${badPct}%, longestGoodStreak=${Math.round(dailyStats.longestGoodStreakMs/1000)}s, alerts=${dailyStats.alertCount}`
-    );
-}
-
 function formatTime(ms) {
     if (ms < 1000) return '0s';
     const seconds = Math.round(ms / 1000);
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     return `${minutes}m`;
+}
+
+function formatTimeHMS(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }

@@ -65,12 +65,6 @@ function cacheElements() {
     elements.postureTimer = document.getElementById('postureTimer');
     elements.timerProgress = document.getElementById('timerProgress');
     elements.timerCountdown = document.getElementById('timerCountdown');
-    
-    console.log('Timer elements loaded:', {
-        postureTimer: !!elements.postureTimer,
-        timerProgress: !!elements.timerProgress,
-        timerCountdown: !!elements.timerCountdown
-    });
 }
 
 /**
@@ -109,12 +103,35 @@ async function onTensorFlowReady() {
     }
 }
 
+// Generic notification helper - sends notification if permission granted and tab is hidden
+function sendNotification(title, body, requireHidden = true) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    
+    // Only send if tab is out of focus (unless requireHidden is false)
+    if (requireHidden && !document.hidden) return;
+
+    try {
+        new Notification(title, {
+            body: body,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%232b2b2b" width="192" height="192"/><text x="96" y="120" font-size="80" text-anchor="middle" fill="%2300FFFF">🪑</text></svg>',
+            tag: 'posture-app-' + Date.now(),
+            requireInteraction: false
+        });
+    } catch (err) {
+        console.error('Failed to send notification:', err);
+    }
+}
+
+// Specific notification helpers
+function sendPostureNotification() {
+    sendNotification('⚠️ Posture Alert!', 'Please correct your posture and sit upright.', true);
+}
+
 // Pause/resume helpers for break cooldown
 function pauseTrackingForBreak() {
     isBreakPaused = true;
     // Prevent stats from accruing break time
     lastStatsUpdateTime = null;
-    console.log('Tracking paused for break');
 }
 
 function resumeTrackingAfterBreak() {
@@ -122,7 +139,11 @@ function resumeTrackingAfterBreak() {
     // Reset timers so next frame starts fresh
     lastFrameTime = 0;
     lastStatsUpdateTime = Date.now();
-    console.log('Tracking resumed after break');
+}
+
+function isMobileDevice() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return /android|iphone|ipad|ipod|iemobile|mobile/i.test(ua);
 }
 
 // Break state setters/getters for statsUI
@@ -186,7 +207,6 @@ function checkBreakCheckpoint() {
 
 function incrementTenMinAlertCount() {
     tenMinAlertCount++;
-    console.log(`${CHECKPOINT_INTERVAL_MINUTES}-min alert count: ${tenMinAlertCount}`);
 }
 
 // (UI + timers moved to statsUI.js)
@@ -387,7 +407,7 @@ function checkPosture(poses) {
             }
             lastStatsUpdateTime = now;
             saveDailyStats();
-            logStatsDebug();
+            
             updateStatsUI();
             const breakInfo = checkBreakCheckpoint(); // Check for checkpoint break
             if (breakInfo) {
@@ -460,9 +480,7 @@ function checkPosture(poses) {
         const elapsed = Date.now() - badPostureStartTime;
         const progress = (elapsed / BAD_POSTURE_DURATION_MS) * 100;
         const remainingSeconds = Math.ceil((BAD_POSTURE_DURATION_MS - elapsed) / 1000);
-        
-        console.log(`Timer progress: ${progress.toFixed(1)}%, ${remainingSeconds}s remaining`);
-        
+ 
         // Show and update progress bar
         if (elements.postureTimer) {
             elements.postureTimer.style.display = 'block';
@@ -476,10 +494,10 @@ function checkPosture(poses) {
         }
         
         if (elapsed >= BAD_POSTURE_DURATION_MS) {
-            console.log('15 seconds elapsed, triggering alert');
             elements.postureAlert.style.display = 'block';
             elements.postureAlert.classList.add('show');
             elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+            
             
             // Count alert only once per bad posture episode
             if (dailyStats && !alertIssuedForCurrentEpisode) {
@@ -487,11 +505,11 @@ function checkPosture(poses) {
                 dailyStats.alertCount += 1;
                 incrementTenMinAlertCount(); // Increment checkpoint counter
                 saveDailyStats();
-                logStatsDebug();
                 updateStatsUI();
+                
+                // Send notification only once per episode, if tab is out of focus
+                sendPostureNotification();
             }
-            // Native notifications disabled per user request.
-            // Previously, a Notification was created here when permission was granted.
         }
     } else {
         // Good posture detected - require 1 second of continuous good posture
@@ -499,12 +517,10 @@ function checkPosture(poses) {
             // Start tracking good posture duration
             if (goodPostureStartTime === null) {
                 goodPostureStartTime = Date.now();
-                console.log('Good posture detected, starting good posture timer');
             } else {
                 const goodPostureElapsed = Date.now() - goodPostureStartTime;
                 if (goodPostureElapsed >= GOOD_POSTURE_REQUIRED_MS) {
                     // Sustained good posture for 1 second - reset bad posture timer
-                    console.log('Good posture sustained for 1 second, resetting timer');
                     badPostureStartTime = null;
                     goodPostureStartTime = null;
                     if (elements.postureTimer) {
@@ -514,8 +530,6 @@ function checkPosture(poses) {
                     elements.postureAlert.classList.remove('show');
                     // Reset alert episode flag when posture is no longer bad
                     alertIssuedForCurrentEpisode = false;
-                } else {
-                    console.log(`Good posture: ${goodPostureElapsed}ms / ${GOOD_POSTURE_REQUIRED_MS}ms`);
                 }
             }
         } else {
@@ -571,8 +585,6 @@ async function processFrame() {
             // Render pose skeleton and keypoints
             drawSkeleton(poses);
             drawKeypoints(poses);
-
-            console.log(`Detected ${poses.length} pose(s)`);
         }
     } catch (err) {
         console.error('Frame processing error:', err);
@@ -746,8 +758,6 @@ async function confirmCalibration() {
         if (elements.confirmCalibrationBtn) {
             elements.confirmCalibrationBtn.textContent = 'Confirm Relaxed Position';
         }
-        
-        console.log(`✓ Upright position recorded. Offset: ${Math.round(offset)}px`);
     } else if (calibrationStage === 2) {
         // Store relaxed position
         relaxedNoseShoulderOffset = offset;
@@ -771,9 +781,6 @@ async function confirmCalibration() {
         if (elements.startBtn) {
             elements.startBtn.style.display = 'inline-block';
         }
-
-        console.log(`✓ Relaxed position recorded. Offset: ${Math.round(offset)}px`);
-        console.log(`✓ Calibration complete. Threshold set to ${postureThreshold}px (40% of ${Math.round(offsetDifference)}px difference)`);
         
         // Automatically start tracking after calibration
         await startTracking();
@@ -788,6 +795,21 @@ document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
     initDailyStats();
     startBackgroundTimers();
+
+    if (isMobileDevice()) {
+        if (elements.startBtn) {
+            const unsupportedMsg = document.createElement('h3');
+            unsupportedMsg.textContent = 'This site is not supported on mobile devices.';
+            unsupportedMsg.style.textAlign = 'center';
+            unsupportedMsg.style.margin = '1rem 0';
+            elements.startBtn.replaceWith(unsupportedMsg);
+        }
+        if (elements.confirmCalibrationBtn) {
+            elements.confirmCalibrationBtn.style.display = 'none';
+        }
+        return;
+    }
+
     if (elements.startBtn) {
         elements.startBtn.addEventListener('click', startTracking);
     }

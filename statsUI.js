@@ -8,7 +8,7 @@ function updateStatsUI() {
     const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
     const goodPct = classifiedMs > 0 ? ((dailyStats.goodMs / classifiedMs) * 100).toFixed(1) : '0.0';
     const badPct = classifiedMs > 0 ? ((dailyStats.badMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const totalTime = formatTime(dailyStats.totalMs);
+    const totalTime = formatTimeHMS(dailyStats.totalMs);
     const longestStreak = formatTime(dailyStats.longestGoodStreakMs);
 
     const statGoodPct = document.getElementById('statGoodPct');
@@ -46,19 +46,46 @@ function showBreakModal(breakInfo) {
         reasonEl.textContent = reasonText || 'Stand up, stretch, and rest your eyes';
     }
 
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     updateBreakCountdownDisplay();
+    
+    // Send break start notification
+    if (typeof sendNotification === 'function') {
+        sendNotification(
+            `⏰ Break Time: ${durationMin} minute${durationMin > 1 ? 's' : ''}`,
+            reasonText || 'Stand up, stretch, and rest your eyes',
+            false // Send even if tab is visible
+        );
+    }
 }
 
 function closeBreakModal(completed = false) {
     if (typeof setBreakState === 'function') setBreakState(false);
     if (typeof clearBreakEndTime === 'function') clearBreakEndTime();
 
+    // Reset checkpoint window so a new break doesn't fire immediately after finishing
+    if (typeof lastCheckpointTime !== 'undefined') {
+        lastCheckpointTime = Date.now();
+    }
+    if (typeof tenMinAlertCount !== 'undefined') {
+        tenMinAlertCount = 0;
+    }
+
     const modal = document.getElementById('breakModal');
     if (modal) modal.style.display = 'none';
 
     if (typeof resumeTrackingAfterBreak === 'function') resumeTrackingAfterBreak();
-    console.log(completed ? 'Break completed!' : 'Break dismissed early');
+    
+    // Send break end notification
+    if (typeof sendNotification === 'function') {
+        if (completed) {
+            sendNotification(
+                '✅ Break Complete!',
+                'Time to resume tracking. Sit with good posture!',
+                false // Send even if tab is visible
+            );
+        }
+    }
 }
 
 function updateBreakCountdownDisplay() {
