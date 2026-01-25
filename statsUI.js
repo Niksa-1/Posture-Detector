@@ -1,30 +1,62 @@
 // UI and timer handling for stats and breaks
 
 function updateStatsUI() {
+    // 1. Check Authentication Visibility
+    const authToken = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    const analyticsSection = document.getElementById('analyticsSection');
+    
+    if (!authToken) {
+        if (analyticsSection) analyticsSection.style.display = 'none';
+        return;
+    } else {
+        if (analyticsSection) analyticsSection.style.display = 'block';
+    }
+
+    // 2. Data Validation
     if (typeof dailyStats === 'undefined' || !dailyStats) return;
-    const statsPanel = document.getElementById('statsPanel');
-    if (statsPanel) statsPanel.style.display = 'block';
 
+    // 3. Calculations
     const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
-    const goodPct = classifiedMs > 0 ? ((dailyStats.goodMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const badPct = classifiedMs > 0 ? ((dailyStats.badMs / classifiedMs) * 100).toFixed(1) : '0.0';
-    const totalTime = formatTimeHMS(dailyStats.totalMs);
-    const longestStreak = formatTime(dailyStats.longestGoodStreakMs);
+    const goodPct = classifiedMs > 0 ? (dailyStats.goodMs / classifiedMs) * 100 : 0;
+    
+    // 4. Update Card 1: Quality Score
+    const scoreEl = document.getElementById('qualityScoreValue');
+    const barEl = document.getElementById('qualityScoreBar');
+    if (scoreEl) scoreEl.textContent = `${goodPct.toFixed(0)}%`;
+    if (barEl) barEl.style.width = `${goodPct}%`;
 
-    const statGoodPct = document.getElementById('statGoodPct');
-    if (statGoodPct) statGoodPct.textContent = `${goodPct}%`;
+    // 5. Update Card 2: Total Tracking
+    const totalEl = document.getElementById('totalTimeValue');
+    const goodEl = document.getElementById('goodTimeValue');
+    const badEl = document.getElementById('badTimeValue');
+    
+    if (totalEl) totalEl.textContent = formatTimeHMS(dailyStats.totalMs);
+    if (goodEl) goodEl.textContent = formatTime(dailyStats.goodMs);
+    if (badEl) badEl.textContent = formatTime(dailyStats.badMs);
 
-    const statBadPct = document.getElementById('statBadPct');
-    if (statBadPct) statBadPct.textContent = `${badPct}%`;
+    // 6. Update Card 3: Discipline
+    const streakEl = document.getElementById('streakValue');
+    const alertEl = document.getElementById('alertCountValue');
+    const feedbackEl = document.getElementById('disciplineFeedback');
+    
+    if (streakEl) streakEl.textContent = formatTime(dailyStats.longestGoodStreakMs);
+    if (alertEl) alertEl.textContent = dailyStats.alertCount;
 
-    const statTotalTime = document.getElementById('statTotalTime');
-    if (statTotalTime) statTotalTime.textContent = totalTime;
+    // Dynamic feedback based on alerts
+    if (feedbackEl) {
+        if (dailyStats.alertCount === 0) feedbackEl.textContent = "Perfect discipline so far!";
+        else if (dailyStats.alertCount < 5) feedbackEl.textContent = "Minor adjustments needed.";
+        else feedbackEl.textContent = "Take more frequent breaks.";
+    }
+}
 
-    const statLongestStreak = document.getElementById('statLongestStreak');
-    if (statLongestStreak) statLongestStreak.textContent = longestStreak;
-
-    const statAlertCount = document.getElementById('statAlertCount');
-    if (statAlertCount) statAlertCount.textContent = dailyStats.alertCount;
+function formatTimeHMS(ms) {
+    if (!ms || ms < 0) return '0h 0m';
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
 }
 
 function showBreakModal(breakInfo) {

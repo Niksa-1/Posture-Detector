@@ -838,6 +838,9 @@ function updateAuthUI() {
             nameLabel.style.display = 'none';
         }
     }
+    if (typeof updateStatsUI === 'function') {
+        updateStatsUI();
+    }
 }
 
 function handleLogout() {
