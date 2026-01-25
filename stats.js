@@ -45,15 +45,6 @@ function loadDailyStats(key) {
 
 function saveDailyStats() {
     if (!dailyKey || !dailyStats) return;
-    try {
-        localStorage.setItem(STORAGE_PREFIX + dailyKey, JSON.stringify(dailyStats));
-    } catch (e) {
-        console.warn('Failed to save stats:', e);
-    }
-}
-
-function saveDailyStats() {
-    if (!dailyKey || !dailyStats) return;
     
     // 1. Keep saving to LocalStorage (for instant UI updates)
     try {
@@ -84,6 +75,16 @@ function formatTimeHMS(ms) {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function initDailyStats() {
+    dailyKey = getTodayKey();
+    dailyStats = loadDailyStats(dailyKey);
+    lastStatsUpdateTime = null;
+    lastCheckpointTime = Date.now(); // Start the 10-minute break timer
+    tenMinAlertCount = 0;
+    
+    console.log('✓ Stats initialized for', dailyKey, dailyStats);
 }
 
 async function syncStatsToDatabase() {
