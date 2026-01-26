@@ -260,7 +260,7 @@ function handleLogin(event) {
     // Call API
     loginUser(email, password)
         .then(data => {
-            UserStorage.setCurrentUser(data.user, data.token);
+            window.UserStorage.setCurrentUser(data.user, data.token);
             updateAuthUI();
             submitBtn.textContent = 'Success!';
             showMessage(`Welcome back, ${data.user.name}!`, 'success');
@@ -341,7 +341,7 @@ function handleRegister(event) {
     // Call API
     registerUser(name, email, password)
         .then(data => {
-            UserStorage.setCurrentUser(data.user, data.token);
+            window.UserStorage.setCurrentUser(data.user, data.token);
             updateAuthUI();
             submitBtn.textContent = 'Account Created!';
             showMessage(`Account created successfully! Welcome, ${name}!`, 'success');
@@ -358,7 +358,7 @@ function handleRegister(event) {
 }
 
 function handleLogout() {
-    UserStorage.logout();
+    window.UserStorage.logout();
     updateAuthUI();
     window.location.href = './index.html';
 }
