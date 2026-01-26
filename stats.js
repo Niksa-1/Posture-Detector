@@ -132,6 +132,8 @@ function initDailyStats() {
         tenMinAlertCount = 0;
         console.log('✓ Stats initialized for', dailyKey, dailyStats);
     }
+
+    updateStatsUI();
 }
 
 async function syncStatsToDatabase() {
