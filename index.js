@@ -917,7 +917,7 @@ function toggleAudioMute() {
 
 window.addEventListener('load', () => {
     onTensorFlowReady();
-    registerServiceWorker();
+    // registerServiceWorker(); // Temporarily disabled for PWA pause
 });
 
 // ============================================
@@ -925,31 +925,26 @@ window.addEventListener('load', () => {
 // ============================================
 
 function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-
-    navigator.serviceWorker.register('/sw.js')
-        .then((reg) => {
-            console.log('✓ Service worker registered', reg);
-
-            // If there's an already waiting worker, tell it to take over immediately
-            if (reg.waiting) {
-                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-
-            reg.addEventListener('updatefound', () => {
-                const newWorker = reg.installing;
-                if (!newWorker) return;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    }
-                });
-            });
-        })
-        .catch((err) => console.log('✗ Service worker registration failed:', err));
-
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Reload so the new service worker version controls the page immediately
-        window.location.reload();
-    });
+    // Service worker disabled during PWA pause
+    // if (!('serviceWorker' in navigator)) return;
+    // navigator.serviceWorker.register('/sw.js')
+    //     .then((reg) => {
+    //         console.log('✓ Service worker registered', reg);
+    //         if (reg.waiting) {
+    //             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    //         }
+    //         reg.addEventListener('updatefound', () => {
+    //             const newWorker = reg.installing;
+    //             if (!newWorker) return;
+    //             newWorker.addEventListener('statechange', () => {
+    //                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+    //                     newWorker.postMessage({ type: 'SKIP_WAITING' });
+    //                 }
+    //             });
+    //         });
+    //     })
+    //     .catch((err) => console.log('✗ Service worker registration failed:', err));
+    // navigator.serviceWorker.addEventListener('controllerchange', () => {
+    //     window.location.reload();
+    // });
 }
