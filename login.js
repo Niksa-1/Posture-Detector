@@ -265,11 +265,6 @@ function handleLogin(event) {
             submitBtn.textContent = 'Success!';
             showMessage(`Welcome back, ${data.user.name}!`, 'success');
             
-            // Load user's daily stats from database
-            if (typeof initDailyStats === 'function') {
-                initDailyStats();
-            }
-            
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);

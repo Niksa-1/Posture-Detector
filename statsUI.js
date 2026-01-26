@@ -8,16 +8,10 @@ function updateStatsUI() {
     const sessionTimeEl = document.getElementById('statTotalTime');
     if (sessionTimeEl) sessionTimeEl.textContent = formatTimeHMS(dailyStats.totalMs);
 
-    // 2. Check Authentication Visibility for analytics
-    const authToken = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    // 2. Show analytics only if logged in
     const analyticsSection = document.getElementById('analyticsSection');
-    
-    if (!authToken) {
-        if (analyticsSection) analyticsSection.style.display = 'none';
-        return;
-    } else {
-        if (analyticsSection) analyticsSection.style.display = 'block';
-    }
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (analyticsSection) analyticsSection.style.display = isLoggedIn ? 'block' : 'none';
 
     // 3. Calculations
     const classifiedMs = dailyStats.goodMs + dailyStats.badMs;

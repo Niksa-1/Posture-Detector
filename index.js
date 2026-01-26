@@ -945,7 +945,7 @@ window.addEventListener('load', () => {
 
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('./sw.js')
+    navigator.serviceWorker.register('/sw.js')
         .then((reg) => {
             console.log('✓ Service worker registered', reg);
             if (reg.waiting) {
