@@ -72,18 +72,21 @@ async function fetchStatsFromDatabase() {
 function saveDailyStats() {
     if (!dailyKey || !dailyStats) return;
     
-    // 1. Keep saving to LocalStorage (for instant UI updates)
-    try {
-        localStorage.setItem(STORAGE_PREFIX + dailyKey, JSON.stringify(dailyStats));
-    } catch (e) {
-        console.warn('Failed to save local stats:', e);
-    }
-
-    // 2. Sync to Database every 5 minutes OR when session stops
-    // We check if it's been 5 minutes since the last DB sync
-    if (!window.lastDbSync || Date.now() - window.lastDbSync > 60000) {
-        syncStatsToDatabase();
-        window.lastDbSync = Date.now();
+    const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    
+    if (token) {
+        // User is logged in - save to database every 5 minutes
+        if (!window.lastDbSync || Date.now() - window.lastDbSync > 60000) {
+            syncStatsToDatabase();
+            window.lastDbSync = Date.now();
+        }
+    } else {
+        // User is not logged in - save to localStorage
+        try {
+            localStorage.setItem(STORAGE_PREFIX + dailyKey, JSON.stringify(dailyStats));
+        } catch (e) {
+            console.warn('Failed to save local stats:', e);
+        }
     }
 }
 
