@@ -640,6 +640,57 @@ body {
   color: var(--text-gray);
 }
 
+/* Settings Accordion */
+.settings-accordion {
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+
+.settings-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  gap: 0.75rem;
+  user-select: none;
+}
+
+.settings-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.accordion-header .material-symbols-outlined {
+  background-color: rgba(121, 201, 197, 0.2);
+  color: var(--soft-mint);
+  border-radius: 50%;
+  padding: 0.35rem;
+  font-size: 1.4rem;
+}
+
+.accordion-caret {
+  transition: transform 0.2s ease;
+}
+
+.settings-accordion[open] .accordion-caret {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+}
+
 /* Posture Warning Card */
 .posture-warning-card {
   padding: 1.5rem;
@@ -762,6 +813,7 @@ body {
   background-color: var(--primary);
   margin: 0 auto;
   border-radius: 9999px;
+  margin-bottom: 3em;
 }
 
 /* Steps Grid */

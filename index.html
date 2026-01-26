@@ -106,30 +106,6 @@
                     </div>
                 </div>
                 
-                <!-- Audio Toggle Card -->
-                <div id="audioToggleCard" class="glass-panel mini-stat-card toggle-card" style="cursor: pointer;">
-                    <div class="stat-icon" id="audioToggleIcon">
-                        <span class="material-symbols-outlined">volume_up</span>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Alert Sound</p>
-                        <p class="stat-value" id="audioToggleStatus">On</p>
-                    </div>
-                </div>
-
-                <!-- Threshold Adjustment Card -->
-                <div class="glass-panel mini-stat-card slider-card">
-                    <div class="stat-icon">
-                        <span class="material-symbols-outlined">tune</span>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Threshold</p>
-                        <p class="stat-value"><span id="thresholdValue">40%</span> drop</p>
-                        <input id="thresholdSlider" class="slider-input" type="range" min="0.4" max="0.8" step="0.05" value="0.4" aria-label="Posture threshold sensitivity">
-                        <p class="stat-helper">Head drop needed before alert</p>
-                    </div>
-                </div>
-
                 <!-- Session Time Card -->
                 <div class="glass-panel mini-stat-card">
                     <div class="stat-icon">
@@ -151,6 +127,45 @@
                         <p class="stat-value" id="nextBreakTimer">--</p>
                     </div>
                 </div>
+
+                <!-- Settings Accordion -->
+                <details class="settings-accordion glass-panel">
+                    <summary>
+                        <div class="accordion-header">
+                            <span class="material-symbols-outlined">settings</span>
+                            <div>
+                                <p class="stat-label">Settings</p>
+                                <p class="stat-helper">Sound and threshold</p>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined accordion-caret">expand_more</span>
+                    </summary>
+                    <div class="accordion-body">
+                        <!-- Audio Toggle Card -->
+                        <div id="audioToggleCard" class="glass-panel mini-stat-card toggle-card" style="cursor: pointer;">
+                            <div class="stat-icon" id="audioToggleIcon">
+                                <span class="material-symbols-outlined">volume_up</span>
+                            </div>
+                            <div class="stat-content">
+                                <p class="stat-label">Alert Sound</p>
+                                <p class="stat-value" id="audioToggleStatus">On</p>
+                            </div>
+                        </div>
+
+                        <!-- Threshold Adjustment Card -->
+                        <div class="glass-panel mini-stat-card slider-card">
+                            <div class="stat-icon">
+                                <span class="material-symbols-outlined">tune</span>
+                            </div>
+                            <div class="stat-content">
+                                <p class="stat-label">Sensitivity</p>
+                                <p class="stat-value"><span id="thresholdValue">40%</span> drop</p>
+                                <input id="thresholdSlider" class="slider-input" type="range" min="0.4" max="0.8" step="0.05" value="0.4" aria-label="Posture threshold sensitivity">
+                                <p class="stat-helper">Difference needed before alert</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
 
             </div>
         </div>
