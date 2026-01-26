@@ -117,6 +117,7 @@ function initDailyStats() {
         fetchStatsFromDatabase().then(dbStats => {
             if (dbStats) {
                 dailyStats = dbStats;
+                console.log(dbStats);
             } else {
                 dailyStats = loadDailyStats(dailyKey);
             }
