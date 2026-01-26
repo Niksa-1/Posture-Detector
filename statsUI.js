@@ -9,7 +9,7 @@ function updateStatsUI() {
     if (sessionTimeEl) sessionTimeEl.textContent = formatTimeHMS(dailyStats.totalMs);
 
     // 2. Show analytics only if logged in
-    const analyticsSection = getElementById('analyticsSection');
+    const analyticsSection = document.getElementById('analyticsSection');
     analyticsSection.style.display = 'block';
 
     // 3. Calculations
