@@ -1,5 +1,7 @@
 // DAILY STATS
 const CHECKPOINT_INTERVAL_MINUTES = 10; // How often to check for breaks (in minutes)
+const DB_SYNC_INTERVAL_MINUTES = 1; // How often to sync stats to database (in minutes)
+const DB_SYNC_INTERVAL_MS = DB_SYNC_INTERVAL_MINUTES * 60 * 1000;
 
 const STORAGE_PREFIX = 'postureStats:';
 let dailyStats = null;
@@ -75,8 +77,8 @@ function saveDailyStats() {
     const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
     
     if (token) {
-        // User is logged in - save to database every 5 minutes
-        if (!window.lastDbSync || Date.now() - window.lastDbSync > 60000) {
+        // User is logged in - save to database at specified interval
+        if (!window.lastDbSync || Date.now() - window.lastDbSync > DB_SYNC_INTERVAL_MS) {
             syncStatsToDatabase();
             window.lastDbSync = Date.now();
         }
