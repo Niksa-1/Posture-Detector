@@ -189,8 +189,8 @@ function validateForm(formId) {
 }
 
 function updateAuthUI() {
-    const authToken = UserStorage.getAuthToken();
-    const currentUser = UserStorage.getCurrentUser();
+    const authToken = window.UserStorage.getAuthToken();
+    const currentUser = window.UserStorage.getCurrentUser();
     const loginBtn = document.querySelector('.btn-login');
     const nameLabel = document.querySelector('.user-name-label');
 
