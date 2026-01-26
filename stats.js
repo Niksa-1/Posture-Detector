@@ -39,6 +39,36 @@ function loadDailyStats(key) {
     return { totalMs: 0, goodMs: 0, badMs: 0, longestGoodStreakMs: 0, alertCount: 0 };
 }
 
+async function fetchStatsFromDatabase() {
+    const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    if (!token) return null;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/stats/today`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✓ Loaded stats from database:', data);
+            return {
+                totalMs: data.total_ms || 0,
+                goodMs: data.good_ms || 0,
+                badMs: data.bad_ms || 0,
+                longestGoodStreakMs: data.streak_ms || 0,
+                alertCount: data.alerts || 0
+            };
+        }
+    } catch (err) {
+        console.error('✗ Failed to fetch stats from database:', err);
+    }
+    return null;
+}
+
 function saveDailyStats() {
     if (!dailyKey || !dailyStats) return;
     
@@ -75,12 +105,28 @@ function formatTimeHMS(ms) {
 
 function initDailyStats() {
     dailyKey = getTodayKey();
-    dailyStats = loadDailyStats(dailyKey);
-    lastStatsUpdateTime = null;
-    lastCheckpointTime = Date.now(); // Start the 10-minute break timer
-    tenMinAlertCount = 0;
     
-    console.log('✓ Stats initialized for', dailyKey, dailyStats);
+    // Try to load from database first (if logged in), then fall back to localStorage
+    const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
+    if (token) {
+        fetchStatsFromDatabase().then(dbStats => {
+            if (dbStats) {
+                dailyStats = dbStats;
+            } else {
+                dailyStats = loadDailyStats(dailyKey);
+            }
+            lastStatsUpdateTime = null;
+            lastCheckpointTime = Date.now();
+            tenMinAlertCount = 0;
+            console.log('✓ Stats initialized for', dailyKey, dailyStats);
+        });
+    } else {
+        dailyStats = loadDailyStats(dailyKey);
+        lastStatsUpdateTime = null;
+        lastCheckpointTime = Date.now();
+        tenMinAlertCount = 0;
+        console.log('✓ Stats initialized for', dailyKey, dailyStats);
+    }
 }
 
 async function syncStatsToDatabase() {
