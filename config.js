@@ -1,6 +1,6 @@
-const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
+window.API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
 
-const UserStorage = {
+window.UserStorage = {
     // From login.js
     setCurrentUser(user, token) {
         const sessionData = {

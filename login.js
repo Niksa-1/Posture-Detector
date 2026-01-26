@@ -1,7 +1,7 @@
 // API FUNCTIONS
 
 async function registerUser(name, email, password) {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await fetch(`${window.API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -19,7 +19,7 @@ async function registerUser(name, email, password) {
 }
 
 async function loginUser(email, password) {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${window.API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ async function loginUser(email, password) {
 }
 
 async function getCurrentUser(token) {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    const response = await fetch(`${window.API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -160,9 +160,12 @@ function clearErrorsOnInput() {
 
 function validateForm(formId) {
     const form = document.getElementById(formId);
+    if (!form) return;
+
     const submitBtn = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('input[required]');
-    
+    if (!submitBtn) return;
+
     function checkValidity() {
         let allFilled = true;
         inputs.forEach(input => {
@@ -186,8 +189,8 @@ function validateForm(formId) {
 }
 
 function updateAuthUI() {
-    const authToken = UserStorage.getAuthToken();
-    const currentUser = UserStorage.getCurrentUser();
+    const authToken = window.UserStorage.getAuthToken();
+    const currentUser = window.UserStorage.getCurrentUser();
     const loginBtn = document.querySelector('.btn-login');
     const nameLabel = document.querySelector('.user-name-label');
 
