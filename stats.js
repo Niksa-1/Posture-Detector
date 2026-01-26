@@ -124,7 +124,7 @@ function initDailyStats() {
             lastStatsUpdateTime = null;
             lastCheckpointTime = Date.now();
             tenMinAlertCount = 0;
-            console.log('✓ Stats initialized from DB:', dailyKey, dailyStats);
+            console.log('✓ Stats initialized for:', dailyKey, dailyStats);
         });
     } else {
         dailyStats = loadDailyStats(dailyKey);
@@ -133,8 +133,8 @@ function initDailyStats() {
         tenMinAlertCount = 0;
         console.log('✓ Stats initialized for', dailyKey, dailyStats);
     }
-    const analyticsSection = document.getElementById('analyticsSection');
-    analyticsSection.style.display = 'block';
+    //const analyticsSection = document.getElementById('analyticsSection');
+    //analyticsSection.style.display = 'block';
 }
 
 async function syncStatsToDatabase() {
