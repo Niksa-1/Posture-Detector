@@ -30,6 +30,7 @@ let breakEndTime = null;
 let backgroundTimerId = null;
 let isMuted = false;
 let thresholdMultiplier = 0.4; // Multiplier applied to offset difference
+let notificationPermissionRequested = false;
 
 // DOM Elements Cache
 const elements = {
@@ -198,6 +199,21 @@ function setBackgroundTimerId(id) {
 
 function getBackgroundTimerId() {
     return backgroundTimerId;
+}
+
+async function ensureNotificationPermission() {
+    if (notificationPermissionRequested) return Notification.permission === 'granted';
+    notificationPermissionRequested = true;
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    try {
+        const result = await Notification.requestPermission();
+        return result === 'granted';
+    } catch (err) {
+        console.warn('Notification permission request failed:', err);
+        return false;
+    }
 }
 
 // Break checkpoint logic
@@ -624,6 +640,9 @@ async function startTracking() {
         return;
     }
 
+    // Ask for notification permission on user gesture
+    ensureNotificationPermission();
+
     // Start calibration if not calibrated
     if (!isCalibrated) {
         startCalibration();
@@ -917,7 +936,7 @@ function toggleAudioMute() {
 
 window.addEventListener('load', () => {
     onTensorFlowReady();
-    // registerServiceWorker(); // Temporarily disabled for PWA pause
+    registerServiceWorker();
 });
 
 // ============================================
@@ -925,26 +944,25 @@ window.addEventListener('load', () => {
 // ============================================
 
 function registerServiceWorker() {
-    // Service worker disabled during PWA pause
-    // if (!('serviceWorker' in navigator)) return;
-    // navigator.serviceWorker.register('/sw.js')
-    //     .then((reg) => {
-    //         console.log('✓ Service worker registered', reg);
-    //         if (reg.waiting) {
-    //             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    //         }
-    //         reg.addEventListener('updatefound', () => {
-    //             const newWorker = reg.installing;
-    //             if (!newWorker) return;
-    //             newWorker.addEventListener('statechange', () => {
-    //                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-    //                     newWorker.postMessage({ type: 'SKIP_WAITING' });
-    //                 }
-    //             });
-    //         });
-    //     })
-    //     .catch((err) => console.log('✗ Service worker registration failed:', err));
-    // navigator.serviceWorker.addEventListener('controllerchange', () => {
-    //     window.location.reload();
-    // });
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('/sw.js')
+        .then((reg) => {
+            console.log('✓ Service worker registered', reg);
+            if (reg.waiting) {
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                });
+            });
+        })
+        .catch((err) => console.log('✗ Service worker registration failed:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
 }
