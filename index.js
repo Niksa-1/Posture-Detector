@@ -439,6 +439,8 @@ function checkPosture(poses) {
                 badPostureDetected = true;
             }
         }
+    } else {
+        console.log('No poses detected in frame');
     }
 
     // Require 15 seconds of continuous bad posture before alerting
@@ -469,6 +471,7 @@ function checkPosture(poses) {
     if (badPostureDetected) {
         // Reset good posture timer when bad posture is detected
         goodPostureStartTime = null;
+        console.log('Bad posture detected');
         
         if (badPostureStartTime === null) {
             badPostureStartTime = Date.now();
@@ -481,7 +484,8 @@ function checkPosture(poses) {
  
         // Show and update progress bar
         if (elements.postureTimer) {
-            elements.postureTimer.style.display = 'block';
+            // Use flex to honor the card layout styling when visible
+            elements.postureTimer.style.display = 'flex';
         }
         if (elements.timerProgress) {
             elements.timerProgress.style.width = progress + '%';

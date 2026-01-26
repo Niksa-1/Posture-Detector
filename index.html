@@ -54,17 +54,23 @@
                         Sit in your best upright posture and click "Confirm Upright Position" when ready.
                     </div>
 
-                    <!-- Posture Timer -->
-                    <div id="postureTimer" class="posture-timer-container" style="display:none;">
+                    <!-- Posture Timer Card -->
+                    <div id="postureTimer" class="posture-timer-inline" style="display:none;">
                         <div class="posture-warning">
                             <strong>⚠️ Bad Posture Detected</strong><br>
-                            <small>Sit upright or alert will trigger in <span id="timerCountdown">15</span>s</small>
-                        </div>
-                        <div class="timer-progress-bar">
-                            <div id="timerProgress" class="timer-progress-fill"></div>
+                            <small>Alert in <span id="timerCountdown">15</span>s</small>
+                            <div class="timer-progress-bar">
+                                <div id="timerProgress" class="timer-progress-fill"></div>
+                            </div>
                         </div>
                     </div>
-
+                    
+                    <!-- Posture Alert -->
+                    <div id="postureAlert" class="posture-alert" style="display:none;">
+                        <strong>⚠️ Posture Alert!</strong> Please correct your posture and sit upright.
+                        <button class="alert-close" onclick="document.getElementById('postureAlert').style.display='none'">&times;</button>
+                    </div>
+                    
                     <!-- Video Feed -->
                     <div id="viewer" class="video-viewer">
                         <video id="videoInput" style="position: absolute; left: -9999px;"></video>
@@ -76,16 +82,6 @@
                         <div class="spinner-circle"></div>
                     </div>
 
-                    <!-- Posture Alert -->
-                    <div id="postureAlert" class="posture-alert" style="display:none;">
-                        <strong>⚠️ Posture Alert!</strong> Please correct your posture and sit upright.
-                        <button class="alert-close" onclick="document.getElementById('postureAlert').style.display='none'">&times;</button>
-                    </div>
-
-                    <!-- Next Break Timer -->
-                    <div id="nextBreakContainer" class="next-break-alert" style="display:block;">
-                        <strong>Next break:</strong> <span id="nextBreakTimer">--</span>
-                    </div>
 
                     <audio id="beepSound" src="./warning.mp3" preload="auto" hidden></audio>
                 </div>
@@ -117,6 +113,17 @@
                     <div class="stat-content">
                         <p class="stat-label">Session Time</p>
                         <p class="stat-value" id="statTotalTime">00:00:00</p>
+                    </div>
+                </div>
+
+                <!-- Next Break Card -->
+                <div id="nextBreakContainer" class="glass-panel mini-stat-card" style="display:block;">
+                    <div class="stat-icon break-icon">
+                        <span class="material-symbols-outlined">free_breakfast</span>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Next Break</p>
+                        <p class="stat-value" id="nextBreakTimer">--</p>
                     </div>
                 </div>
             </div>
