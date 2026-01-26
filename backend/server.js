@@ -257,7 +257,7 @@ app.post('/api/stats/update', authenticateToken, async (req, res) => {
   try {
     // Upsert logic: Update if exists for this user today, otherwise insert
     await db.execute({
-      sql: `INSERT INTO user_stats (user_id, date, total_ms, good_ms, bad_ms, longest_streak_ms, alert_count)
+      sql: `INSERT INTO posture_stats (user_id, date, total_ms, good_ms, bad_ms, longest_streak_ms, alert_count)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id, date) DO UPDATE SET
               total_ms = ?,
