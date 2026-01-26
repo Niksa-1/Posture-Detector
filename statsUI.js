@@ -1,7 +1,14 @@
 // UI and timer handling for stats and breaks
 
 function updateStatsUI() {
-    // 1. Check Authentication Visibility
+    // 1. Data Validation
+    if (typeof dailyStats === 'undefined' || !dailyStats) return;
+
+    // Update Session Time in control panel (always visible)
+    const sessionTimeEl = document.getElementById('statTotalTime');
+    if (sessionTimeEl) sessionTimeEl.textContent = formatTimeHMS(dailyStats.totalMs);
+
+    // 2. Check Authentication Visibility for analytics
     const authToken = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
     const analyticsSection = document.getElementById('analyticsSection');
     
@@ -11,9 +18,6 @@ function updateStatsUI() {
     } else {
         if (analyticsSection) analyticsSection.style.display = 'block';
     }
-
-    // 2. Data Validation
-    if (typeof dailyStats === 'undefined' || !dailyStats) return;
 
     // 3. Calculations
     const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
@@ -48,15 +52,6 @@ function updateStatsUI() {
         else if (dailyStats.alertCount < 5) feedbackEl.textContent = "Minor adjustments needed.";
         else feedbackEl.textContent = "Take more frequent breaks.";
     }
-}
-
-function formatTimeHMS(ms) {
-    if (!ms || ms < 0) return '0h 0m';
-    const totalSeconds = Math.floor(ms / 1000);
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
 }
 
 function showBreakModal(breakInfo) {

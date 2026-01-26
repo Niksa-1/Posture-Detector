@@ -86,6 +86,7 @@ function initDailyStats() {
 }
 
 async function syncStatsToDatabase() {
+    console.log('⟳ Syncing stats to database...');
     const token = typeof UserStorage !== 'undefined' ? UserStorage.getAuthToken() : null;
     if (!token || !dailyStats) return;
 

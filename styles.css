@@ -180,6 +180,7 @@ body {
 /* Camera Card */
 .camera-card {
   overflow: hidden;
+  background-color: #1e293b;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.4);
   transform: scale(1);
@@ -237,14 +238,56 @@ body {
   margin: 1rem;
 }
 
+.posture-timer-inline {
+  margin: 1rem;
+  background: transparent;
+  padding: 0;
+}
+
+.posture-timer-inline .timer-progress-bar {
+  height: 8px;
+  background-color: rgba(229, 231, 235, 0.8);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-top: 0.5rem;
+  display: block;
+  width: 100%;
+}
+
+.posture-timer-inline .timer-progress-fill {
+  height: 100%;
+  background-color: #f59e0b;
+  transition: width 0.3s ease;
+  width: 0%;
+  display: block;
+}
+
 .posture-warning {
   background-color: #fef3c7;
   color: #92400e;
   padding: 0.75rem;
-  margin-bottom: 0.5rem;
   border-radius: 0.5rem;
   text-align: center;
   border-left: 4px solid #f59e0b;
+  width: 100%;
+}
+
+.posture-warning .timer-progress-bar {
+  height: 8px;
+  background-color: rgba(229, 231, 235, 0.8);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-top: 0.5rem;
+  display: block;
+  width: 100%;
+}
+
+.posture-warning .timer-progress-fill {
+  height: 100%;
+  background-color: #f59e0b;
+  transition: width 0.3s ease;
+  width: 0%;
+  display: block;
 }
 
 .timer-progress-bar {
@@ -252,6 +295,7 @@ body {
   background-color: #e5e7eb;
   border-radius: 0.5rem;
   overflow: hidden;
+  margin-top: 0.5rem;
 }
 
 .timer-progress-fill {
@@ -259,6 +303,7 @@ body {
   background-color: #f59e0b;
   transition: width 0.3s ease;
   width: 0%;
+  display: block;
 }
 
 /* Posture Alert */
@@ -561,6 +606,54 @@ body {
   font-weight: 700;
   color: var(--text-dark);
   margin: 0;
+}
+
+.stat-value-small {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+/* Posture Warning Card */
+.posture-warning-card {
+  padding: 1.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  background: rgba(254, 243, 199, 0.3);
+}
+
+.posture-warning-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.15);
+}
+
+.posture-warning-card .timer-progress-bar {
+  height: 8px;
+  background-color: rgba(229, 231, 235, 0.6);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.posture-warning-card .timer-progress-fill {
+  height: 100%;
+  background-color: #f59e0b;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.warning-icon {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.break-icon {
+  background-color: rgba(107, 114, 128, 0.2);
+  color: var(--text-gray);
 }
 
 /* Break Modal */
