@@ -53,7 +53,7 @@ function saveDailyStats() {
 
     // 2. Sync to Database every 5 minutes OR when session stops
     // We check if it's been 5 minutes since the last DB sync
-    if (!window.lastDbSync || Date.now() - window.lastDbSync > 300000) {
+    if (!window.lastDbSync || Date.now() - window.lastDbSync > 60000) {
         syncStatsToDatabase();
         window.lastDbSync = Date.now();
     }
