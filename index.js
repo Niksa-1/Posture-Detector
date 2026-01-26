@@ -793,23 +793,6 @@ async function confirmCalibration() {
 // AUTHENTICATION & UI STATE
 // ============================================
 
-const UserStorage = {
-    getCurrentUser() {
-        const userData = localStorage.getItem('currentUser');
-        return userData ? JSON.parse(userData) : null;
-    },
-    getAuthToken() {
-        return localStorage.getItem('authToken');
-    },
-    logout() {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('authToken');
-        if (localStorage.getItem('rememberMe') !== 'true') {
-            localStorage.removeItem('rememberedUser');
-        }
-    }
-};
-
 function updateAuthUI() {
     const authToken = UserStorage.getAuthToken();
     const currentUser = UserStorage.getCurrentUser();

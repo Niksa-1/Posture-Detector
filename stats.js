@@ -1,6 +1,4 @@
-// DAILY STATS (LocalStorage)
-const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
-
+// DAILY STATS
 const CHECKPOINT_INTERVAL_MINUTES = 10; // How often to check for breaks (in minutes)
 
 const STORAGE_PREFIX = 'postureStats:';
@@ -53,7 +51,7 @@ function saveDailyStats() {
 
     // 2. Sync to Database every 5 minutes OR when session stops
     // We check if it's been 5 minutes since the last DB sync
-    if (!window.lastDbSync || Date.now() - window.lastDbSync > 300000) {
+    if (!window.lastDbSync || Date.now() - window.lastDbSync > 60000) {
         syncStatsToDatabase();
         window.lastDbSync = Date.now();
     }

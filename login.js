@@ -1,6 +1,3 @@
-// API CONFIGURATION
-const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
-
 // API FUNCTIONS
 
 async function registerUser(name, email, password) {
@@ -56,43 +53,6 @@ async function getCurrentUser(token) {
     
     return data;
 }
-
-// USER STORAGE SERVICE
-
-const UserStorage = {
-    setCurrentUser(user, token) {
-        const sessionData = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            loginTime: new Date().toISOString()
-        };
-        localStorage.setItem('currentUser', JSON.stringify(sessionData));
-        localStorage.setItem('authToken', token);
-        
-        // If "Remember Me" was checked, store email
-        if (localStorage.getItem('rememberMe') === 'true') {
-            localStorage.setItem('rememberedUser', user.email);
-        }
-    },
-
-    getCurrentUser() {
-        const userData = localStorage.getItem('currentUser');
-        return userData ? JSON.parse(userData) : null;
-    },
-
-    getAuthToken() {
-        return localStorage.getItem('authToken');
-    },
-
-    logout() {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('authToken');
-        if (localStorage.getItem('rememberMe') !== 'true') {
-            localStorage.removeItem('rememberedUser');
-        }
-    }
-};
 
 // VALIDATION FUNCTIONS
 
