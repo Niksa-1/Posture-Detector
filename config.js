@@ -1,0 +1,1 @@
+const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';

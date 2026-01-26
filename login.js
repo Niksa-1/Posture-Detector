@@ -1,6 +1,3 @@
-// API CONFIGURATION
-const API_BASE_URL = 'https://posture-detector-j0j7.onrender.com/api';
-
 // API FUNCTIONS
 
 async function registerUser(name, email, password) {
