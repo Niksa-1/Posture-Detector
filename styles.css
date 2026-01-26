@@ -573,6 +573,15 @@ body {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
 
+.toggle-card {
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.toggle-card:active {
+  transform: translateY(0px);
+}
+
 .stat-icon {
   width: 3rem;
   height: 3rem;
@@ -613,6 +622,22 @@ body {
   font-weight: 600;
   color: var(--text-dark);
   margin-bottom: 0.5rem;
+}
+
+.slider-card {
+  align-items: flex-start;
+}
+
+.slider-input {
+  width: 100%;
+  margin-top: 0.75rem;
+  accent-color: var(--primary);
+}
+
+.stat-helper {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-gray);
 }
 
 /* Posture Warning Card */

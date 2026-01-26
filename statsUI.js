@@ -171,7 +171,7 @@ function updateNextBreakTimer() {
     if (!timerEl) return;
 
     if (typeof isTracking !== 'boolean' || !isTracking) {
-        timerEl.textContent = 'Waiting for tracking…';
+        timerEl.textContent = 'Waiting for tracking';
         return;
     }
 

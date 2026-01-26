@@ -70,7 +70,7 @@
                         <strong>⚠️ Posture Alert!</strong> Please correct your posture and sit upright.
                         <button class="alert-close" onclick="document.getElementById('postureAlert').style.display='none'">&times;</button>
                     </div>
-                    
+
                     <!-- Video Feed -->
                     <div id="viewer" class="video-viewer">
                         <video id="videoInput" style="position: absolute; left: -9999px;"></video>
@@ -104,6 +104,30 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- Audio Toggle Card -->
+                <div id="audioToggleCard" class="glass-panel mini-stat-card toggle-card" style="cursor: pointer;">
+                    <div class="stat-icon" id="audioToggleIcon">
+                        <span class="material-symbols-outlined">volume_up</span>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Alert Sound</p>
+                        <p class="stat-value" id="audioToggleStatus">On</p>
+                    </div>
+                </div>
+
+                <!-- Threshold Adjustment Card -->
+                <div class="glass-panel mini-stat-card slider-card">
+                    <div class="stat-icon">
+                        <span class="material-symbols-outlined">tune</span>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Threshold</p>
+                        <p class="stat-value"><span id="thresholdValue">40%</span> drop</p>
+                        <input id="thresholdSlider" class="slider-input" type="range" min="0.4" max="0.8" step="0.05" value="0.4" aria-label="Posture threshold sensitivity">
+                        <p class="stat-helper">Head drop needed before alert</p>
+                    </div>
+                </div>
 
                 <!-- Session Time Card -->
                 <div class="glass-panel mini-stat-card">
@@ -117,7 +141,7 @@
                 </div>
 
                 <!-- Next Break Card -->
-                <div id="nextBreakContainer" class="glass-panel mini-stat-card" style="display:block;">
+                <div id="nextBreakContainer" class="glass-panel mini-stat-card">
                     <div class="stat-icon break-icon">
                         <span class="material-symbols-outlined">free_breakfast</span>
                     </div>
@@ -126,6 +150,7 @@
                         <p class="stat-value" id="nextBreakTimer">--</p>
                     </div>
                 </div>
+
             </div>
         </div>
 

@@ -28,6 +28,8 @@ let isBreakPaused = false; // Pause tracking during break cooldown
 let isOnBreak = false;
 let breakEndTime = null;
 let backgroundTimerId = null;
+let isMuted = false;
+let thresholdMultiplier = 0.4; // Multiplier applied to offset difference
 
 // DOM Elements Cache
 const elements = {
@@ -42,7 +44,9 @@ const elements = {
     beepSound: null,
     postureTimer: null,
     timerProgress: null,
-    timerCountdown: null
+    timerCountdown: null,
+    thresholdSlider: null,
+    thresholdValue: null
 };
 
 // ============================================
@@ -65,6 +69,27 @@ function cacheElements() {
     elements.postureTimer = document.getElementById('postureTimer');
     elements.timerProgress = document.getElementById('timerProgress');
     elements.timerCountdown = document.getElementById('timerCountdown');
+    elements.thresholdSlider = document.getElementById('thresholdSlider');
+    elements.thresholdValue = document.getElementById('thresholdValue');
+}
+
+function setThresholdMultiplier(value) {
+    const numeric = parseFloat(value);
+    if (Number.isNaN(numeric)) return;
+    thresholdMultiplier = Math.min(0.8, Math.max(0.4, numeric));
+    if (elements.thresholdValue) {
+        elements.thresholdValue.textContent = `${Math.round(thresholdMultiplier * 100)}%`;
+    }
+    if (elements.thresholdSlider) {
+        elements.thresholdSlider.value = thresholdMultiplier;
+    }
+    recalculatePostureThreshold();
+}
+
+function recalculatePostureThreshold() {
+    if (calibratedNoseShoulderOffset === null || relaxedNoseShoulderOffset === null) return;
+    const diff = Math.abs(relaxedNoseShoulderOffset - calibratedNoseShoulderOffset);
+    postureThreshold = Math.round(diff * thresholdMultiplier);
 }
 
 /**
@@ -100,6 +125,10 @@ async function onTensorFlowReady() {
     const initialized = await initializePoseDetector();
     if (initialized && elements.startBtn) {
         elements.startBtn.disabled = false;
+    }
+    // Initialize threshold display if slider exists
+    if (elements.thresholdSlider) {
+        setThresholdMultiplier(elements.thresholdSlider.value || thresholdMultiplier);
     }
 }
 
@@ -335,22 +364,6 @@ function drawKeypoints(poses) {
     });
 }
 
-/**
- * Draw threshold line on canvas
- */
-function drawThresholdLine(thresholdPx) {
-    if (!elements.canvasCtx || !elements.canvas) return;
-
-    const ctx = elements.canvasCtx;
-    const threshold = thresholdPx * canvasScale;
-
-    ctx.strokeStyle = '#00FFFF';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, threshold);
-    ctx.lineTo(elements.canvas.width, threshold);
-    ctx.stroke();
-}
 
 /**
  * Get current nose-shoulder offset with validation
@@ -498,7 +511,9 @@ function checkPosture(poses) {
         if (elapsed >= BAD_POSTURE_DURATION_MS) {
             elements.postureAlert.style.display = 'block';
             elements.postureAlert.classList.add('show');
-            elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+            if (!isMuted) {
+                elements.beepSound.play().catch(err => console.log('Audio play failed:', err));
+            }
             
             
             // Count alert only once per bad posture episode
@@ -764,9 +779,9 @@ async function confirmCalibration() {
         // Store relaxed position
         relaxedNoseShoulderOffset = offset;
         
-        // Calculate threshold: 40% of the difference between relaxed and upright
+        // Calculate threshold using configurable multiplier (40-80% of relaxed-upright difference)
         const offsetDifference = Math.abs(relaxedNoseShoulderOffset - calibratedNoseShoulderOffset);
-        postureThreshold = Math.round(offsetDifference * 0.4);
+        postureThreshold = Math.round(offsetDifference * thresholdMultiplier);
         
         // Complete calibration
         isCalibrating = false;
@@ -867,7 +882,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmCalibrationBtn) {
         elements.confirmCalibrationBtn.addEventListener('click', confirmCalibration);
     }
+
+    // Audio toggle
+    const audioToggleCard = document.getElementById('audioToggleCard');
+    if (audioToggleCard) {
+        audioToggleCard.addEventListener('click', toggleAudioMute);
+    }
+
+    // Threshold slider
+    if (elements.thresholdSlider) {
+        elements.thresholdSlider.addEventListener('input', (e) => setThresholdMultiplier(e.target.value));
+        setThresholdMultiplier(elements.thresholdSlider.value || thresholdMultiplier);
+    }
 });
+
+function toggleAudioMute() {
+    isMuted = !isMuted;
+    const icon = document.getElementById('audioToggleIcon');
+    const status = document.getElementById('audioToggleStatus');
+    const iconSpan = icon?.querySelector('.material-symbols-outlined');
+    
+    if (isMuted) {
+        if (iconSpan) iconSpan.textContent = 'volume_off';
+        if (status) status.textContent = 'Off';
+        if (icon) icon.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+        if (icon) icon.style.color = '#ef4444';
+    } else {
+        if (iconSpan) iconSpan.textContent = 'volume_up';
+        if (status) status.textContent = 'On';
+        if (icon) icon.style.backgroundColor = 'rgba(121, 201, 197, 0.2)';
+        if (icon) icon.style.color = 'var(--soft-mint)';
+    }
+}
 
 window.addEventListener('load', () => {
     onTensorFlowReady();
