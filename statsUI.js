@@ -10,8 +10,7 @@ function updateStatsUI() {
 
     // 2. Show analytics only if logged in
     const analyticsSection = document.getElementById('analyticsSection');
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (analyticsSection) analyticsSection.style.display = isLoggedIn ? 'block' : 'none';
+    analyticsSection.style.display = 'block';
 
     // 3. Calculations
     const classifiedMs = dailyStats.goodMs + dailyStats.badMs;
